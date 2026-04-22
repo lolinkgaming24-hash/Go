@@ -2,17 +2,18 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 let mode = '1P', p1, p2, p1C, p2C, active = false, paused = false;
 
+// 10 UNIQUE CHARACTERS WITH CUSTOM RANGES
 const chars = {
-    'Gojo': { c: '#fff', d: 8, r: 50, s: 6, w: 'blue' },
-    'Sukuna': { c: '#f44', d: 10, r: 60, s: 7, w: 'cleave' },
-    'Itadori': { c: '#fd0', d: 12, r: 45, s: 8, w: 'fist' },
-    'Nanami': { c: '#dca', d: 18, r: 55, s: 5, w: 'blade' },
-    'Maki': { c: '#4a4', d: 9, r: 85, s: 9, w: 'spear' },
-    'Megumi': { c: '#44f', d: 7, r: 55, s: 6, w: 'sword' },
-    'Toji': { c: '#555', d: 15, r: 70, s: 10, w: 'dagger' },
-    'Nobara': { c: '#f6a', d: 11, r: 60, s: 6, w: 'hammer' },
-    'Geto': { c: '#74a', d: 9, r: 65, s: 7, w: 'curse' },
-    'Yuta': { c: '#aaf', d: 13, r: 75, s: 7, w: 'katana' }
+    'Gojo': { c: '#fff', d: 11, s: 6, w: 'none', rng: { m1: 55, sp: 500 } },
+    'Sukuna': { c: '#f44', d: 12, s: 7, w: 'cleave', rng: { m1: 65, sp: 600 } },
+    'Itadori': { c: '#fd0', d: 15, s: 8, w: 'fist', rng: { m1: 45, sp: 65 } },
+    'Nanami': { c: '#dca', d: 20, s: 5, w: 'blade', rng: { m1: 65, sp: 80 } },
+    'Maki': { c: '#4a4', d: 10, s: 9, w: 'spear', rng: { m1: 110, sp: 130 } },
+    'Megumi': { c: '#44f', d: 9, s: 6, w: 'sword', rng: { m1: 75, sp: 160 } },
+    'Toji': { c: '#666', d: 17, s: 10, w: 'dagger', rng: { m1: 55, sp: 250 } },
+    'Nobara': { c: '#f6a', d: 14, s: 6, w: 'hammer', rng: { m1: 60, sp: 350 } },
+    'Geto': { c: '#74a', d: 12, s: 7, w: 'curse', rng: { m1: 70, sp: 200 } },
+    'Yuta': { c: '#aaf', d: 15, s: 7, w: 'katana', rng: { m1: 85, sp: 180 } }
 };
 
 class Sorcerer {
@@ -21,43 +22,38 @@ class Sorcerer {
         this.hp = 100; this.vx = 0; this.vy = 0; this.dir = pNum === 1 ? 1 : -1;
         this.cpu = cpu; this.m1T = 0; this.spT = 0; this.swing = 0; this.fx = 0;
     }
+
     draw() {
         ctx.strokeStyle = this.s.c; ctx.lineWidth = 4; ctx.lineCap = 'round';
-        // Head
+        // Stickman Body
         ctx.beginPath(); ctx.arc(this.x + 20, this.y - 15, 12, 0, 7); ctx.stroke();
-        // Body
         ctx.beginPath(); ctx.moveTo(this.x + 20, this.y); ctx.lineTo(this.x + 20, this.y + 50); ctx.stroke();
         
-        // Arm & Weapon
-        let r = this.swing > 0 ? this.s.r : 22;
+        let r = this.swing > 0 ? this.s.rng.m1 : 25;
         let armX = this.x + 20 + (r * this.dir);
         let armY = this.y + 20;
         ctx.beginPath(); ctx.moveTo(this.x + 20, this.y + 15); ctx.lineTo(armX, armY); ctx.stroke();
         
-        // Weapon Sprites
+        // Weapon Drawing
         ctx.lineWidth = 3;
-        if(this.s.w === 'spear') {
-            ctx.strokeStyle = '#999'; ctx.beginPath(); ctx.moveTo(armX, armY); ctx.lineTo(armX+(45*this.dir), armY); ctx.stroke();
-        } else if(this.s.w === 'sword' || this.s.w === 'katana' || this.s.w === 'blade') {
-            ctx.strokeStyle = '#ccc'; ctx.beginPath(); ctx.moveTo(armX, armY); ctx.lineTo(armX+(30*this.dir), armY-25); ctx.stroke();
-        } else if(this.s.w === 'dagger') {
-            ctx.strokeStyle = '#555'; ctx.beginPath(); ctx.moveTo(armX, armY); ctx.lineTo(armX+(15*this.dir), armY-10); ctx.stroke();
-        }
+        if(this.s.w === 'spear') { ctx.strokeStyle = '#888'; ctx.beginPath(); ctx.moveTo(armX, armY); ctx.lineTo(armX+(50*this.dir), armY); ctx.stroke(); }
+        if(this.s.w === 'katana') { ctx.strokeStyle = '#eee'; ctx.beginPath(); ctx.moveTo(armX, armY); ctx.lineTo(armX+(40*this.dir), armY-30); ctx.stroke(); }
+        if(this.s.w === 'cleave' && this.swing > 0) { ctx.strokeStyle = '#f00'; ctx.strokeRect(armX, armY-30, 5, 60); }
 
-        // Special Effect Visuals
+        // FX Visuals
         if(this.fx > 0) {
-            ctx.save();
-            ctx.globalAlpha = this.fx / 60;
-            ctx.fillStyle = this.s.c;
-            ctx.beginPath(); ctx.arc(this.x+20, this.y+20, 100 - this.fx, 0, Math.PI*2); ctx.fill();
+            ctx.save(); ctx.globalAlpha = this.fx / 60;
+            if(this.k === 'Gojo') { ctx.fillStyle = '#a0f'; ctx.beginPath(); ctx.arc(this.x+20, this.y+20, 100-this.fx, 0, 7); ctx.fill(); }
+            else if(this.k === 'Yuta') { ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(this.x-(60*this.dir), this.y, 40, 0, 7); ctx.fill(); ctx.strokeStyle='#fff'; ctx.stroke(); }
+            else { ctx.fillStyle = this.s.c; ctx.beginPath(); ctx.arc(this.x+20, this.y+20, 80-this.fx, 0, 7); ctx.fill(); }
             ctx.restore();
         }
 
-        // Legs
         ctx.strokeStyle = this.s.c; ctx.lineWidth = 4;
         ctx.beginPath(); ctx.moveTo(this.x + 20, this.y + 50); ctx.lineTo(this.x, this.y + 90); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(this.x + 20, this.y + 50); ctx.lineTo(this.x + 40, this.y + 90); ctx.stroke();
     }
+
     update(opp) {
         if (paused) return;
         this.x += this.vx; this.y += this.vy;
@@ -68,66 +64,69 @@ class Sorcerer {
         if (this.fx > 0) this.fx--;
         if (this.cpu) this.ai(opp);
     }
+
     atk(opp) {
         if (this.m1T > 0 || paused) return; 
-        this.m1T = 25; this.swing = 10;
-        if (Math.abs(this.x - opp.x) < this.s.r + 25 && Math.abs(this.y - opp.y) < 60) opp.hp -= this.s.d;
+        this.m1T = 20; this.swing = 10;
+        let dist = Math.abs((this.x+20) - (opp.x+20));
+        if (dist < this.s.rng.m1 && Math.abs(this.y - opp.y) < 80) opp.hp -= this.s.d;
     }
+
     spec(opp) {
         if (this.spT > 0 || paused) return; 
-        this.spT = 400; this.fx = 60;
-        if (this.k === 'Gojo') { opp.hp -= 25; } 
-        else { this.vx = this.dir * 40; opp.hp -= 15; }
+        this.spT = 500; this.fx = 60;
+        let dist = Math.abs((this.x+20) - (opp.x+20));
+        if (dist < this.s.rng.sp) {
+            if (this.k === 'Toji') { this.x = opp.x - (40*this.dir); opp.hp -= 20; }
+            else { opp.hp -= 25; this.vx = this.dir * 30; }
+        }
     }
+
     ai(opp) {
         let dist = Math.abs(this.x - opp.x);
-        this.vx = (opp.x < this.x) ? -3 : 3; this.dir = (opp.x < this.x) ? -1 : 1;
-        if (dist < this.s.r) this.atk(opp);
+        this.vx = (opp.x < this.x) ? -3.5 : 3.5; this.dir = (opp.x < this.x) ? -1 : 1;
+        if (dist < this.s.rng.m1) this.atk(opp);
         if (dist < 200 && Math.random() < 0.01) this.spec(opp);
     }
 }
 
-// Touch Handling Logic
-const t1 = { l: 0, r: 0, u: 0, a: 0, s: 0 }, t2 = { l: 0, r: 0, u: 0, a: 0, s: 0 };
+// TOUCH SYSTEM (LEFT: Move, RIGHT: Attack)
+const t1 = { l: 0, r: 0, u: 0, a: 0, s: 0 };
 function handleTouch(e) {
     if (!active) return;
     e.preventDefault();
-    [t1, t2].forEach(p => { p.l = p.r = p.u = p.a = p.s = 0; });
+    t1.l = t1.r = t1.u = t1.a = t1.s = 0;
     for (let t of e.touches) {
         const x = t.clientX, y = t.clientY, w = window.innerWidth, h = window.innerHeight;
-        const p = x < w / 2 ? t1 : t2;
-        const off = x < w / 2 ? 0 : w - 260; // Offset for P2 buttons
-        const relX = x - off;
-        if (y > h - 240) {
-            if (relX < 80) p.l = 1; 
-            else if (relX > 180) p.r = 1; 
-            else { if (y < h - 110) p.u = 1; else p.a = 1; }
-            if (relX > 130 && y > h - 80) p.s = 1;
+        // Left Side: Movement
+        if (x < w / 2) {
+            if (y < h - 160) t1.u = 1; // Top of left side is Jump
+            else if (x < w / 4) t1.l = 1; // Far left
+            else t1.r = 1; // Middle left
+        } 
+        // Right Side: Actions
+        else {
+            if (x > w * 0.8) t1.s = 1; // Far right is Skill
+            else t1.a = 1; // Middle right is M1
         }
     }
 }
+
 window.addEventListener('touchstart', handleTouch, { passive: false });
 window.addEventListener('touchend', handleTouch, { passive: false });
-window.addEventListener('touchmove', handleTouch, { passive: false });
 
 function togglePause() { 
-    paused = !paused;
-    document.getElementById('pause-screen').style.display = paused ? 'flex' : 'none';
+    paused = !paused; 
+    document.getElementById('pause-screen').style.display = paused ? 'flex' : 'none'; 
 }
 
 function initMode(m) {
     mode = m; document.getElementById('m-start').style.display = 'none';
     document.getElementById('m-char').style.display = 'block';
     const g = document.getElementById('char-grid');
-    g.innerHTML = '';
     Object.keys(chars).forEach(c => {
         const b = document.createElement('button'); b.innerText = c;
-        b.onclick = () => { 
-            if (!p1C) { 
-                p1C = c; document.getElementById('sel-title').innerText = "PLAYER 2: SELECT"; 
-                if (mode === '1P') { p2C = 'Sukuna'; startGame(); } 
-            } else { p2C = c; startGame(); }
-        };
+        b.onclick = () => { if (!p1C) { p1C = c; document.getElementById('sel-title').innerText = "PLAYER 2"; if (mode === '1P') { p2C = 'Sukuna'; startGame(); } } else { p2C = c; startGame(); } };
         g.appendChild(b);
     });
 }
@@ -136,7 +135,6 @@ function startGame() {
     document.getElementById('menu').style.display = 'none';
     document.getElementById('pause-btn').style.display = 'block';
     document.getElementById('controls').style.display = 'block';
-    if (mode === '1P') document.getElementById('p2-pad').style.opacity = '0';
     p1 = new Sorcerer(150, 100, p1C, 1, false);
     p2 = new Sorcerer(canvas.width - 200, 100, p2C, 2, mode === '1P');
     active = true; resize(); loop();
@@ -151,31 +149,21 @@ function loop() {
     if (!active) return;
     if (!paused) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#222'; ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
-
-        // Player 1 Input
+        ctx.fillStyle = '#111'; ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
+        
         p1.vx = (keys.KeyA || t1.l) ? -p1.s.s : (keys.KeyD || t1.r) ? p1.s.s : 0;
         if (p1.vx !== 0) p1.dir = p1.vx > 0 ? 1 : -1;
-        if ((keys.KeyW || t1.u) && p1.vy === 0) p1.vy = -16;
+        if ((keys.KeyW || t1.u) && p1.vy === 0) p1.vy = -18;
         if (keys.Space || t1.a) p1.atk(p2);
         if (keys.KeyE || t1.s) p1.spec(p2);
-
-        // Player 2 Input
-        if (mode === '2P') {
-            p2.vx = (keys.ArrowLeft || t2.l) ? -p2.s.s : (keys.ArrowRight || t2.r) ? p2.s.s : 0;
-            if (p2.vx !== 0) p2.dir = p2.vx > 0 ? 1 : -1;
-            if ((keys.ArrowUp || t2.u) && p2.vy === 0) p2.vy = -16;
-            if (keys.Enter || t2.a) p2.atk(p1);
-            if (keys.ShiftRight || t2.s) p2.spec(p1);
-        }
 
         p1.update(p2); p2.update(p1);
         p1.draw(); p2.draw();
 
         document.getElementById('p1-hp').style.width = p1.hp + '%';
         document.getElementById('p2-hp').style.width = p2.hp + '%';
-        document.getElementById('p1-sp').style.width = ((400 - p1.spT) / 4) + '%';
-        document.getElementById('p2-sp').style.width = ((400 - p2.spT) / 4) + '%';
+        document.getElementById('p1-sp').style.width = ((500 - p1.spT) / 5) + '%';
+        document.getElementById('p2-sp').style.width = ((500 - p2.spT) / 5) + '%';
 
         if (p1.hp <= 0 || p2.hp <= 0) {
             active = false; document.getElementById('end-screen').style.display = 'flex';
