@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JJK Battle: Cursed Edition</title>
+    <title>Stick Fight</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,20 +14,23 @@
             <button class="menu-btn" onclick="initMode('2P')">2P VERSUS</button>
         </div>
         <div id="m-char" style="display:none; width: 95%;">
-            <h2 id="sel-title">SELECT SORCERER</h2>
+            <h2 id="sel-title">PLAYER 1 SELECT</h2>
             <div class="grid" id="char-grid"></div>
         </div>
     </div>
 
-    <div id="pause-screen" class="overlay" style="display:none; background: rgba(0,0,0,0.9);">
+    <div id="pause-screen" class="overlay" style="display:none; background: rgba(0,0,0,0.95);">
         <h1>PAUSED</h1>
         <button class="menu-btn" onclick="togglePause()">RESUME</button>
-        <button class="menu-btn" onclick="location.reload()" style="margin-top:20px; font-size:14px; opacity:0.6;">QUIT</button>
+        <button class="menu-btn" onclick="goToMenu()" style="margin-top:20px; border-color: #ff4d4d; color: #ff4d4d;">MAIN MENU</button>
     </div>
 
     <div id="end-screen" class="overlay" style="display:none;">
-        <h1 id="win-msg">WINNER</h1>
-        <button class="menu-btn" onclick="location.reload()">REMATCH</button>
+        <h1 id="win-msg" style="font-size: 5rem; letter-spacing: 10px;">WINS</h1>
+        <div style="display: flex; gap: 10px;">
+            <button class="menu-btn" onclick="rematch()">REMATCH</button>
+            <button class="menu-btn" onclick="goToMenu()">MENU</button>
+        </div>
     </div>
 
     <div id="ui-layer">
