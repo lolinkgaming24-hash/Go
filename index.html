@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Stick Fight</title>
+    <title>JJK Battle: Cursed Edition</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -19,7 +19,7 @@
         </div>
     </div>
 
-    <div id="pause-screen" class="overlay" style="display:none; background: rgba(0,0,0,0.95);">
+    <div id="pause-screen" class="overlay" style="display:none; background: rgba(0,0,0,0.9);">
         <h1>PAUSED</h1>
         <button class="menu-btn" onclick="togglePause()">RESUME</button>
         <button class="menu-btn" onclick="goToMenu()" style="margin-top:20px; border-color: #ff4d4d; color: #ff4d4d;">MAIN MENU</button>
@@ -35,12 +35,10 @@
 
     <div id="ui-layer">
         <div id="p1-hud" class="hud">
-            <div class="char-name">P1</div>
             <div class="bar"><div id="p1-hp" class="hp-f"></div></div>
             <div class="bar" style="height:6px; margin-top:4px;"><div id="p1-sp" class="sp-f"></div></div>
         </div>
         <div id="p2-hud" class="hud">
-            <div class="char-name" style="text-align:right">P2</div>
             <div class="bar"><div id="p2-hp" class="hp-f"></div></div>
             <div class="bar" style="height:6px; margin-top:4px;"><div id="p2-sp" class="sp-f"></div></div>
         </div>
