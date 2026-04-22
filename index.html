@@ -3,48 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JJK Battle: Cursed Edition</title>
+    <title>JJK: Ultimate Cursed Clash</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="ui-layer">
+        <div id="p1-hud" class="hud"><div class="bar"><div id="p1-hp" class="hp-f"></div></div></div>
+        <div id="p2-hud" class="hud"><div class="bar"><div id="p2-hp" class="hp-f"></div></div></div>
+    </div>
+
+    <div id="pause-screen" class="overlay" style="display:none; background: rgba(0,0,0,0.9); z-index: 1000000;">
+        <h1>PAUSED</h1>
+        <button class="menu-btn" onclick="togglePause()">RESUME</button>
+        <button class="menu-btn" onclick="location.reload()">MAIN MENU</button>
+    </div>
+
     <div id="menu" class="overlay">
         <h1 class="title">JJK BATTLE</h1>
         <div id="m-start">
-            <button class="menu-btn" onclick="initMode('1P')">SOLO VS CPU</button>
+            <button class="menu-btn" onclick="initMode('1P')">1P vs CPU</button>
             <button class="menu-btn" onclick="initMode('2P')">2P VERSUS</button>
         </div>
         <div id="m-char" style="display:none; width: 95%;">
-            <h2 id="sel-title">PLAYER 1 SELECT</h2>
+            <h2 id="sel-title">SELECT CHARACTER</h2>
             <div class="grid" id="char-grid"></div>
         </div>
     </div>
-
-    <div id="pause-screen" class="overlay" style="display:none; background: rgba(0,0,0,0.9);">
-        <h1>PAUSED</h1>
-        <button class="menu-btn" onclick="togglePause()">RESUME</button>
-        <button class="menu-btn" onclick="goToMenu()" style="margin-top:20px; border-color: #ff4d4d; color: #ff4d4d;">MAIN MENU</button>
-    </div>
-
-    <div id="end-screen" class="overlay" style="display:none;">
-        <h1 id="win-msg" style="font-size: 5rem; letter-spacing: 10px;">WINS</h1>
-        <div style="display: flex; gap: 10px;">
-            <button class="menu-btn" onclick="rematch()">REMATCH</button>
-            <button class="menu-btn" onclick="goToMenu()">MENU</button>
-        </div>
-    </div>
-
-    <div id="ui-layer">
-        <div id="p1-hud" class="hud">
-            <div class="bar"><div id="p1-hp" class="hp-f"></div></div>
-            <div class="bar" style="height:6px; margin-top:4px;"><div id="p1-sp" class="sp-f"></div></div>
-        </div>
-        <div id="p2-hud" class="hud">
-            <div class="bar"><div id="p2-hp" class="hp-f"></div></div>
-            <div class="bar" style="height:6px; margin-top:4px;"><div id="p2-sp" class="sp-f"></div></div>
-        </div>
-    </div>
-
-    <button id="pause-btn" onclick="togglePause()">II</button>
 
     <div id="controls" class="ctrl-container">
         <div id="p1-pad" class="corner-pad left">
@@ -70,6 +54,9 @@
             </div>
         </div>
     </div>
+
+    <button id="pause-btn" onclick="togglePause()">II</button>
+
     <canvas id="game"></canvas>
     <script src="script.js"></script>
 </body>
