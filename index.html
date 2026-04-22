@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JJK Battle: Master Edition</title>
+    <title>JJK Battle: Pro Edition</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,7 +15,7 @@
             <button class="menu-btn" onclick="initMode('2P')">2P VERSUS</button>
         </div>
         <div id="m-char" style="display:none; width: 95%;">
-            <h2 id="sel-title" style="color: #0cf;">SELECT SORCERER</h2>
+            <h2 id="sel-title">SELECT SORCERER</h2>
             <div class="grid" id="char-grid"></div>
         </div>
     </div>
@@ -49,21 +49,29 @@
     </div>
 
     <div id="controls" class="ctrl-container">
-        <div id="p1-pad" class="full-pad">
-            <div class="side-left">
-                <div class="btn btn-jump">JUMP</div>
-                <div class="move-row">
-                    <div class="btn btn-dir">←</div>
-                    <div class="btn btn-dir">→</div>
-                </div>
+        <div id="p1-pad" class="side-container">
+            <div class="btn btn-jump" data-p="1" data-v="u">JUMP</div>
+            <div class="row">
+                <div class="btn btn-dir" data-p="1" data-v="l">←</div>
+                <div class="btn btn-dir" data-p="1" data-v="r">→</div>
             </div>
-            <div class="side-right">
-                <div class="btn btn-m1">M1</div>
-                <div class="btn btn-skill">SKILL</div>
+            <div class="row">
+                <div class="btn btn-m1" data-p="1" data-v="a">M1</div>
+                <div class="btn btn-skill" data-p="1" data-v="s">SKILL</div>
             </div>
         </div>
-        <div id="p2-pad" class="full-pad" style="display:none;">
+
+        <div id="p2-pad" class="side-container" style="right: 0; display: none;">
+            <div class="btn btn-jump" data-p="2" data-v="u">JUMP</div>
+            <div class="row">
+                <div class="btn btn-dir" data-p="2" data-v="l">←</div>
+                <div class="btn btn-dir" data-p="2" data-v="r">→</div>
             </div>
+            <div class="row">
+                <div class="btn btn-m1" data-p="2" data-v="a">M1</div>
+                <div class="btn btn-skill" data-p="2" data-v="s">SKILL</div>
+            </div>
+        </div>
     </div>
 
     <canvas id="game"></canvas>
