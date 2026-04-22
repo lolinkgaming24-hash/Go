@@ -2,39 +2,35 @@ body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overfl
 canvas { display: block; background: #050505; }
 
 /* HUD */
-#ui-layer { position: absolute; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
-.hud { position: absolute; top: 15px; width: 32%; }
-#p1-hud { left: 20px; }
-#p2-hud { right: 20px; text-align: right; }
-.bar { width: 100%; height: 16px; background: #222; border: 1px solid #777; border-radius: 3px; }
+#ui-layer { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+.hud { position: absolute; top: 10px; width: 30%; }
+#p1-hud { left: 15px; }
+#p2-hud { right: 15px; text-align: right; }
+.bar { width: 100%; height: 14px; background: #222; border: 1px solid #666; border-radius: 2px; }
 .hp-f { width: 100%; height: 100%; background: #2ecc71; transition: width 0.2s; }
 .sp-f { width: 0%; height: 100%; background: #00d4ff; }
 
 /* Menus */
 .overlay { position: absolute; inset: 0; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; }
-.title { color: #f44; font-size: 3.5rem; letter-spacing: 8px; margin: 0; font-style: italic; }
-.menu-btn { padding: 15px 40px; font-size: 18px; background: #111; color: #fff; border: 2px solid #fff; margin: 10px; cursor: pointer; border-radius: 5px; }
-.grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 20px; }
-.grid button { padding: 10px; background: #1a1a1a; color: white; border: 1px solid #444; border-radius: 4px; font-size: 12px; }
+.title { color: #f44; font-size: 3rem; letter-spacing: 5px; margin: 0; }
+.menu-btn { padding: 12px 30px; background: #111; color: #fff; border: 2px solid #fff; margin: 8px; cursor: pointer; }
+.grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 15px; }
+.grid button { padding: 8px; background: #1a1a1a; color: white; border: 1px solid #444; font-size: 10px; }
 
-/* PRO CONTROLS */
+/* CONTROLS */
 .ctrl-container { position: absolute; inset: 0; pointer-events: none; z-index: 100; display: none; }
-.full-pad { position: absolute; width: 100%; height: 100%; pointer-events: none; }
-
-.side-left { position: absolute; bottom: 40px; left: 40px; display: flex; flex-direction: column; align-items: center; }
-.side-right { position: absolute; bottom: 40px; right: 40px; display: flex; flex-direction: column; gap: 25px; align-items: center; }
-.move-row { display: flex; gap: 40px; margin-top: 15px; }
+.side-container { position: absolute; bottom: 10px; width: 45%; height: 200px; display: flex; flex-direction: column; align-items: center; gap: 10px; pointer-events: none; }
+.row { display: flex; gap: 15px; }
 
 .btn { 
-    background: rgba(255, 255, 255, 0.08); border: 3px solid rgba(255, 255, 255, 0.4); 
-    border-radius: 12px; display: flex; align-items: center; justify-content: center;
-    font-weight: bold; color: #fff; pointer-events: none;
+    background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.4); 
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-weight: bold; color: #fff; pointer-events: auto; /* Buttons are clickable */
 }
-.btn-jump { width: 150px; height: 60px; background: rgba(255,255,255,0.15); }
-.btn-dir { width: 90px; height: 90px; font-size: 24px; }
-.btn-m1 { width: 110px; height: 110px; border-radius: 50%; border-color: #ff4d4d; color: #ff4d4d; font-size: 20px; }
-.btn-skill { width: 90px; height: 90px; border-radius: 50%; border-color: #00d4ff; color: #00d4ff; font-size: 16px; }
+.btn-jump { width: 140px; height: 45px; }
+.btn-dir { width: 65px; height: 65px; }
+.btn-m1 { width: 80px; height: 80px; border-radius: 50%; border-color: #f44; }
+.btn-skill { width: 80px; height: 80px; border-radius: 50%; border-color: #0cf; }
 
-/* Pause Wrapper */
-#pause-wrapper { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); z-index: 5000; }
-#pause-btn { width: 55px; height: 55px; background: #222; border: 2px solid #fff; color: #fff; font-weight: bold; border-radius: 50%; font-size: 20px; cursor: pointer; display: none; }
+#pause-wrapper { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 5000; pointer-events: auto; }
+#pause-btn { width: 45px; height: 45px; background: #222; border: 2px solid #fff; color: #fff; border-radius: 50%; display: none; }
