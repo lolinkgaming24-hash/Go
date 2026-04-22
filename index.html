@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JJK Stickman: Zenin & 7:3 Update</title>
+    <style>
+        body { margin: 0; background: #050505; color: white; font-family: 'Courier New', Courier, monospace; overflow: hidden; touch-action: none; }
+        canvas { display: block; background: radial-gradient(circle, #222 0%, #000 100%); margin: 0 auto; }
+        #ui { position: absolute; top: 20px; width: 100%; display: flex; justify-content: space-around; pointer-events: none; z-index: 5; }
+        .health-bar { width: 40%; height: 20px; background: #300; border: 2px solid #777; border-radius: 10px; overflow: hidden; }
+        .health-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #0f0, #0a0); transition: 0.3s; }
+        
+        #menu-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+        .char-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+        
+        button { padding: 15px; font-size: 0.9rem; cursor: pointer; background: #111; color: #eee; border: 1px solid #444; border-radius: 4px; }
+        button:hover { background: #d4af37; color: black; border-color: #fff; }
+        
+        #controls { position: absolute; bottom: 20px; width: 100%; display: none; justify-content: space-between; padding: 0 20px; box-sizing: border-box; }
+        .touch-btn { width: 65px; height: 65px; background: rgba(255,255,255,0.1); border: 1px solid #555; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<div id="menu-overlay">
+    <h1 id="title">JUJUTSU BATTLE</h1>
+    <div id="mode-select">
+        <button onclick="chooseMode('1P')">1P vs CPU</button>
+        <button onclick="chooseMode('2P')">2P VERSUS</button>
+    </div>
+    <div id="char-select" style="display:none;">
+        <h2 id="select-prompt">PLAYER 1 SELECT</h2>
+        <div class="char-grid">
+            <button onclick="pickCharacter('Gojo')">GOJO<br><small>Limitless</small></button>
+            <button onclick="pickCharacter('Sukuna')">SUKUNA<br><small>Malevolent</small></button>
+            <button onclick="pickCharacter('Itadori')">ITADORI<br><small>Divergent</small></button>
+            <button onclick="pickCharacter('Megumi')">MEGUMI<br><small>Ten Shadows</small></button>
+            <button onclick="pickCharacter('Nanami')">NANAMI<br><small>7:3 Ratio</small></button>
+            <button onclick="pickCharacter('Maki')">MAKI<br><small>Cursed Tool</small></button>
+        </div>
+    </div>
+</div>
+
+<div id="ui">
+    <div class="health-bar"><div id="p1-hp" class="health-fill"></div></div>
+    <div class="health-bar"><div id="p2-hp" class="health-fill"></div></div>
+</div>
+
+<div id="controls">
+    <div style="display:flex; gap:10px;">
+        <div class="touch-btn" id="t-left">LEFT</div>
+        <div class="touch-btn" id="t-up">JUMP</div>
+        <div class="touch-btn" id="t-right">RIGHT</div>
+    </div>
+    <div style="display:flex; gap:10px;">
+        <div class="touch-btn" id="t-atk" style="background:rgba(255,0,0,0.2)">ATK</div>
+        <div class="touch-btn" id="t-spec" style="background:rgba(0,100,255,0.2)">SPEC</div>
+    </div>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const gravity = 0.7;
+
+let gameState = 'START';
+let gameMode = '1P';
+let p1Choice = null, p2Choice = null;
+let p1, p2;
+
+const charData = {
+    'Gojo': { color: '#fff', specColor: '#a0f', speed: 5, reach: 45, dmg: 8, spec: 'Purple' },
+    'Sukuna': { color: '#f55', specColor: '#f90', speed: 6, reach: 50, dmg: 10, spec: 'Cleave' },
+    'Itadori': { color: '#fd0', specColor: '#f05', speed: 7, reach: 40, dmg: 12, spec: 'Black Flash' },
+    'Megumi': { color: '#55f', specColor: '#000', speed: 5, reach: 40, dmg: 7, spec: 'Nue' },
+    'Nanami': { color: '#ddc', specColor: '#ff0', speed: 5, reach: 55, dmg: 15, spec: 'Ratio' },
+    'Maki': { color: '#2a2', specColor: '#fff', speed: 8, reach: 70, dmg: 9, spec: 'Spear Dash' }
+};
+
+class Fighter {
+    constructor(x, y, name, isCPU, pNum) {
+        this.name = name;
+        this.stats = charData[name];
+        this.x = x; this.y = y;
+        this.w = 40; this.h = 85;
+        this.hp = 100;
+        this.vx = 0; this.vy = 0;
+        this.dir = pNum === 1 ? 1 : -1;
+        this.isCPU = isCPU;
+        this.atkTicking = 0;
+        this.cd = 0;
+    }
+
+    draw() {
+        ctx.strokeStyle = this.stats.color;
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+        // Stickman body
+        ctx.beginPath(); ctx.arc(this.x + 20, this.y - 15, 12, 0, 7); ctx.stroke(); // Head
+        ctx.beginPath(); ctx.moveTo(this.x + 20, this.y); ctx.lineTo(this.x + 20, this.y + 50); ctx.stroke(); // Torso
+        // Arms
+        let ext = this.atkTicking > 0 ? this.stats.reach : 10;
+        ctx.beginPath(); ctx.moveTo(this.x + 20, this.y + 15); ctx.lineTo(this.x + 20 + (ext * this.dir), this.y + 20); ctx.stroke();
+        // Legs
+        ctx.beginPath(); ctx.moveTo(this.x + 20, this.y + 50); ctx.lineTo(this.x, this.y + 85); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(this.x + 20, this.y + 50); ctx.lineTo(this.x + 40, this.y + 85); ctx.stroke();
+    }
+
+    update(target) {
+        this.x += this.vx; this.y += this.vy;
+        if (this.y + this.h < canvas.height - 40) this.vy += gravity;
+        else { this.y = canvas.height - 40 - this.h; this.vy = 0; }
+        this.x = Math.max(0, Math.min(canvas.width - this.w, this.x));
+        if(this.atkTicking > 0) this.atkTicking--;
+        if(this.cd > 0) this.cd--;
+        if(this.isCPU) this.ai(target);
+    }
+
+    attack(target) {
+        if(this.atkTicking > 0) return;
+        this.atkTicking = 15;
+        if(Math.abs(this.x - target.x) < this.stats.reach + 20 && Math.abs(this.y - target.y) < 60) {
+            target.hp -= this.stats.dmg;
+        }
+    }
+
+    special(target) {
+        if(this.cd > 0) return;
+        this.cd = 120;
+        ctx.fillStyle = this.stats.specColor;
+        if(this.name === 'Gojo') {
+            ctx.fillRect(0, this.y - 20, canvas.width, 40);
+            target.hp -= 20;
+        } else if (this.name === 'Nanami') {
+            if(Math.abs(this.x - target.x) < 80) target.hp -= 30; // High dmg close range
+        } else {
+            this.vx = this.dir * 25; // Dash for others
+            target.hp -= 15;
+        }
+    }
+
+    ai(target) {
+        this.vx = (target.x < this.x) ? -3 : 3;
+        this.dir = (target.x < this.x) ? -1 : 1;
+        if(Math.abs(this.x - target.x) < 50) this.attack(target);
+        if(Math.random() < 0.01) this.special(target);
+    }
+}
+
+function chooseMode(m) {
+    gameMode = m;
+    document.getElementById('mode-select').style.display = 'none';
+    document.getElementById('char-select').style.display = 'block';
+}
+
+function pickCharacter(name) {
+    if(!p1Choice) {
+        p1Choice = name;
+        if(gameMode === '1P') {
+            p2Choice = Object.keys(charData)[Math.floor(Math.random()*6)];
+            start();
+        } else {
+            document.getElementById('select-prompt').innerText = "PLAYER 2 SELECT";
+        }
+    } else {
+        p2Choice = name;
+        start();
+    }
+}
+
+function start() {
+    document.getElementById('menu-overlay').style.display = 'none';
+    p1 = new Fighter(150, 100, p1Choice, false, 1);
+    p2 = new Fighter(canvas.width - 200, 100, p2Choice, (gameMode === '1P'), 2);
+    gameState = 'RUN';
+    resize();
+    loop();
+}
+
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    if(window.innerWidth < 800) document.getElementById('controls').style.display = 'flex';
+}
+window.addEventListener('resize', resize);
+
+const keys = {};
+window.onkeydown = (e) => keys[e.code] = true;
+window.onkeyup = (e) => keys[e.code] = false;
+
+function loop() {
+    if(gameState !== 'RUN') return;
+    ctx.clearRect(0,0,canvas.width, canvas.height);
+    
+    // Floor
+    ctx.fillStyle = '#111';
+    ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+
+    // P1 Keyboard
+    p1.vx = 0;
+    if(keys['KeyA']) { p1.vx = -p1.stats.speed; p1.dir = -1; }
+    if(keys['KeyD']) { p1.vx = p1.stats.speed; p1.dir = 1; }
+    if(keys['KeyW'] && p1.vy === 0) p1.vy = -15;
+    if(keys['Space']) p1.attack(p2);
+    if(keys['KeyE']) p1.special(p2);
+
+    // P2 Keyboard
+    if(gameMode === '2P') {
+        p2.vx = 0;
+        if(keys['ArrowLeft']) { p2.vx = -p2.stats.speed; p2.dir = -1; }
+        if(keys['ArrowRight']) { p2.vx = p2.stats.speed; p2.dir = 1; }
+        if(keys['ArrowUp'] && p2.vy === 0) p2.vy = -15;
+        if(keys['Enter']) p2.attack(p1);
+        if(keys['ShiftRight']) p2.special(p1);
+    }
+
+    p1.update(p2); p2.update(p1);
+    p1.draw(); p2.draw();
+
+    document.getElementById('p1-hp').style.width = p1.hp + '%';
+    document.getElementById('p2-hp').style.width = p2.hp + '%';
+
+    if(p1.hp <= 0 || p2.hp <= 0) {
+        alert(p1.hp <= 0 ? "P2 VICTORY" : "P1 VICTORY");
+        location.reload();
+        return;
+    }
+    requestAnimationFrame(loop);
+}
+
+// Mobile
+document.getElementById('t-left').ontouchstart = () => { p1.vx = -p1.stats.speed; p1.dir = -1; };
+document.getElementById('t-right').ontouchstart = () => { p1.vx = p1.stats.speed; p1.dir = 1; };
+document.getElementById('t-up').ontouchstart = () => { if(p1.vy === 0) p1.vy = -15; };
+document.getElementById('t-atk').ontouchstart = () => p1.attack(p2);
+document.getElementById('t-spec').ontouchstart = () => p1.special(p2);
+</script>
+</body>
+</html>
