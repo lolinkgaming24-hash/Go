@@ -1,41 +1,47 @@
-body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; touch-action: none; }
-canvas { display: block; background: #050505; z-index: 1; }
+body { margin: 0; background: #000; color: #fff; font-family: 'Arial', sans-serif; overflow: hidden; touch-action: none; user-select: none; }
+canvas { display: block; background: #080808; z-index: 1; }
 
 /* HUD Layer */
 #ui-layer { position: absolute; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
-.hud { position: absolute; top: 10px; width: 35%; pointer-events: none; }
-#p1-hud { left: 10px; }
-#p2-hud { right: 10px; text-align: right; }
-.bar { width: 100%; height: 12px; background: #222; border: 1px solid #fff; margin-top: 5px; }
-.hp-f { width: 100%; height: 100%; background: #0f0; }
-.sp-f { width: 0%; height: 100%; background: #0cf; }
+.hud { position: absolute; top: 15px; width: 35%; pointer-events: none; }
+#p1-hud { left: 15px; }
+#p2-hud { right: 15px; text-align: right; }
+.char-name { font-weight: bold; text-shadow: 2px 2px #000; margin-bottom: 4px; }
+.bar { width: 100%; height: 14px; background: #222; border: 1px solid #fff; border-radius: 4px; overflow: hidden; }
+.hp-f { width: 100%; height: 100%; background: linear-gradient(to right, #2ecc71, #27ae60); transition: width 0.3s; }
+.sp-f { width: 0%; height: 100%; background: #00d4ff; transition: width 0.1s; }
 
 /* Menu Layer */
-.overlay { position: absolute; inset: 0; background: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-button { padding: 15px 30px; font-size: 18px; background: #333; color: #fff; border: 2px solid #fff; border-radius: 10px; cursor: pointer; pointer-events: auto; }
-.grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 20px; }
+.overlay { position: absolute; inset: 0; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
+.menu-btn { padding: 15px 40px; font-size: 20px; background: #222; color: #fff; border: 2px solid #fff; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+.menu-btn:hover { background: #444; }
+
+/* 10 Character Grid */
+.grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 20px; max-width: 600px; }
+.grid button { padding: 12px; font-size: 11px; background: #1a1a1a; border: 1px solid #555; border-radius: 4px; color: #fff; cursor: pointer; }
 
 /* VIRTUAL CONTROLS */
-.ctrl-container { position: absolute; bottom: 0; width: 100%; height: 200px; pointer-events: none; z-index: 50; display: none; }
-.pad { position: absolute; width: 220px; height: 180px; bottom: 10px; pointer-events: none; }
+.ctrl-container { position: absolute; bottom: 0; width: 100%; height: 240px; pointer-events: none; z-index: 50; display: none; }
+.pad { position: absolute; width: 260px; height: 200px; bottom: 20px; pointer-events: none; }
 #p1-pad { left: 10px; }
 #p2-pad { right: 10px; }
 
 .btn { 
-    position: absolute; width: 60px; height: 60px; 
-    background: rgba(100, 100, 100, 0.8); border: 3px solid #fff; 
+    position: absolute; width: 65px; height: 65px; 
+    background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.6); 
     border-radius: 50%; display: flex; align-items: center; 
-    justify-content: center; font-size: 12px; font-weight: bold; color: white;
+    justify-content: center; font-size: 11px; font-weight: bold; color: white;
 }
-.btn-up { top: 0; left: 80px; }
-.btn-l { top: 65px; left: 10px; }
-.btn-r { top: 65px; left: 150px; }
-.btn-m1 { bottom: -5px; left: 40px; background: rgba(200, 0, 0, 0.8); }
-.btn-sp { bottom: -5px; left: 120px; background: rgba(0, 150, 255, 0.8); }
+/* Spaced Layout */
+.btn-up { top: 0; left: 95px; background: rgba(255,255,255,0.2); }
+.btn-l { top: 75px; left: 0px; }
+.btn-r { top: 75px; left: 190px; }
+.btn-m1 { bottom: -10px; left: 45px; border-color: #ff3e3e; color: #ff3e3e; background: rgba(255,0,0,0.1); }
+.btn-sp { bottom: -10px; left: 145px; border-color: #00d4ff; color: #00d4ff; background: rgba(0,212,255,0.1); }
 
-/* Pause Button */
+/* Pause Button Wrapper (Critical for Mobile Clickability) */
+#pause-wrapper { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); z-index: 5000; }
 #pause-btn { 
-    position: absolute; top: 10px; left: 50%; transform: translateX(-50%); 
-    z-index: 200; pointer-events: auto; background: #444; 
-    border: 1px solid #fff; padding: 10px; border-radius: 5px; display: none; 
+    padding: 10px 20px; background: #222; border: 2px solid #fff; color: #fff; 
+    font-weight: bold; cursor: pointer; display: none; border-radius: 5px;
 }
