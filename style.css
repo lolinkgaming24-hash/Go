@@ -1,0 +1,41 @@
+body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; touch-action: none; }
+canvas { display: block; background: #050505; z-index: 1; }
+
+/* HUD Layer */
+#ui-layer { position: absolute; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+.hud { position: absolute; top: 10px; width: 35%; pointer-events: none; }
+#p1-hud { left: 10px; }
+#p2-hud { right: 10px; text-align: right; }
+.bar { width: 100%; height: 12px; background: #222; border: 1px solid #fff; margin-top: 5px; }
+.hp-f { width: 100%; height: 100%; background: #0f0; }
+.sp-f { width: 0%; height: 100%; background: #0cf; }
+
+/* Menu Layer */
+.overlay { position: absolute; inset: 0; background: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+button { padding: 15px 30px; font-size: 18px; background: #333; color: #fff; border: 2px solid #fff; border-radius: 10px; cursor: pointer; pointer-events: auto; }
+.grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 20px; }
+
+/* VIRTUAL CONTROLS */
+.ctrl-container { position: absolute; bottom: 0; width: 100%; height: 200px; pointer-events: none; z-index: 50; display: none; }
+.pad { position: absolute; width: 220px; height: 180px; bottom: 10px; pointer-events: none; }
+#p1-pad { left: 10px; }
+#p2-pad { right: 10px; }
+
+.btn { 
+    position: absolute; width: 60px; height: 60px; 
+    background: rgba(100, 100, 100, 0.8); border: 3px solid #fff; 
+    border-radius: 50%; display: flex; align-items: center; 
+    justify-content: center; font-size: 12px; font-weight: bold; color: white;
+}
+.btn-up { top: 0; left: 80px; }
+.btn-l { top: 65px; left: 10px; }
+.btn-r { top: 65px; left: 150px; }
+.btn-m1 { bottom: -5px; left: 40px; background: rgba(200, 0, 0, 0.8); }
+.btn-sp { bottom: -5px; left: 120px; background: rgba(0, 150, 255, 0.8); }
+
+/* Pause Button */
+#pause-btn { 
+    position: absolute; top: 10px; left: 50%; transform: translateX(-50%); 
+    z-index: 200; pointer-events: auto; background: #444; 
+    border: 1px solid #fff; padding: 10px; border-radius: 5px; display: none; 
+}
