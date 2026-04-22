@@ -9,50 +9,59 @@
 <body>
 
     <div id="menu" class="overlay">
-        <h1>JJK BATTLE</h1>
+        <h1 style="color: #f44; font-size: 3rem; margin-bottom: 10px;">JJK BATTLE</h1>
         <div id="m-start">
-            <button onclick="initMode('1P')">P1 VS CPU</button>
-            <button onclick="initMode('2P')">P1 VS P2</button>
+            <button class="menu-btn" onclick="initMode('1P')">SOLO VS CPU</button>
+            <button class="menu-btn" onclick="initMode('2P')">2P VERSUS</button>
         </div>
-        <div id="m-char" style="display:none;">
-            <h2 id="sel-title">P1 SELECT</h2>
+        <div id="m-char" style="display:none; width: 90%;">
+            <h2 id="sel-title">PLAYER 1: SELECT</h2>
             <div class="grid" id="char-grid"></div>
         </div>
     </div>
 
-    <div id="pause-screen" class="overlay" style="display:none; background: rgba(0,0,0,0.7);">
+    <div id="pause-screen" class="overlay" style="display:none; background: rgba(0,0,0,0.85);">
         <h1>PAUSED</h1>
-        <button onclick="togglePause()">RESUME</button>
+        <button class="menu-btn" onclick="togglePause()">RESUME GAME</button>
+        <button class="menu-btn" onclick="location.reload()" style="margin-top: 10px; font-size: 14px; background: #444;">QUIT TO MENU</button>
     </div>
 
     <div id="end-screen" class="overlay" style="display:none;">
         <h1 id="win-msg">WINNER</h1>
-        <button onclick="location.reload()">REMATCH</button>
+        <button class="menu-btn" onclick="location.reload()">REMATCH</button>
     </div>
 
     <div id="ui-layer">
         <div id="p1-hud" class="hud">
-            <div id="p1-n">P1</div>
+            <div id="p1-n" class="char-name">P1</div>
             <div class="bar"><div id="p1-hp" class="hp-f"></div></div>
-            <div class="bar" style="height:5px;"><div id="p1-sp" class="sp-f"></div></div>
+            <div class="bar" style="height:6px;"><div id="p1-sp" class="sp-f"></div></div>
         </div>
         <div id="p2-hud" class="hud">
-            <div id="p2-n">P2</div>
+            <div id="p2-n" class="char-name">P2</div>
             <div class="bar"><div id="p2-hp" class="hp-f"></div></div>
-            <div class="bar" style="height:5px;"><div id="p2-sp" class="sp-f"></div></div>
+            <div class="bar" style="height:6px;"><div id="p2-sp" class="sp-f"></div></div>
         </div>
     </div>
 
-    <button id="pause-btn" onclick="togglePause()">PAUSE</button>
+    <div id="pause-wrapper">
+        <button id="pause-btn" onclick="togglePause()">PAUSE</button>
+    </div>
 
     <div id="controls" class="ctrl-container">
         <div id="p1-pad" class="pad">
-            <div class="btn btn-up">UP</div><div class="btn btn-l">L</div><div class="btn btn-r">R</div>
-            <div class="btn btn-m1">M1</div><div class="btn btn-sp">SP</div>
+            <div class="btn btn-up">JUMP</div>
+            <div class="btn btn-l">←</div>
+            <div class="btn btn-r">→</div>
+            <div class="btn btn-m1">M1</div>
+            <div class="btn btn-sp">SKILL</div>
         </div>
         <div id="p2-pad" class="pad">
-            <div class="btn btn-up">UP</div><div class="btn btn-l">L</div><div class="btn btn-r">R</div>
-            <div class="btn btn-m1">M1</div><div class="btn btn-sp">SP</div>
+            <div class="btn btn-up">JUMP</div>
+            <div class="btn btn-l">←</div>
+            <div class="btn btn-r">→</div>
+            <div class="btn btn-m1">M1</div>
+            <div class="btn btn-sp">SKILL</div>
         </div>
     </div>
 
