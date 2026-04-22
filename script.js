@@ -2,118 +2,163 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 let mode = '1P', p1, p2, p1C, p2C, active = false, paused = false;
 
-// ENHANCED CHARACTER DATA
 const chars = {
-    'Gojo': { c: '#fff', d: 5, s: 6, w: 'none', rng: { m1: 60, sp: 500 }, desc: 'Hollow Purple: Long-range beam' },
-    'Sukuna': { c: '#f44', d: 6, s: 7, w: 'cleave', rng: { m1: 70, sp: 600 }, desc: 'Dismantle: Multi-cut screen clear' },
-    'Itadori': { c: '#fd0', d: 7, s: 8, w: 'fist', rng: { m1: 45, sp: 60 }, desc: 'Black Flash: Massive point-blank strike' },
-    'Nanami': { c: '#dca', d: 9, s: 5, w: 'blade', rng: { m1: 65, sp: 80 }, desc: '7:3 Strike: Guaranteed heavy crit' },
-    'Maki': { c: '#4a4', d: 5, s: 9, w: 'spear', rng: { m1: 120, sp: 150 }, desc: 'Spear Rush: Multi-hit dash' },
-    'Megumi': { c: '#44f', d: 4, s: 6, w: 'sword', rng: { m1: 75, sp: 200 }, desc: 'Divine Dog: Summon stun' },
-    'Toji': { c: '#666', d: 8, s: 10, w: 'dagger', rng: { m1: 60, sp: 300 }, desc: 'Inevitable End: Instant teleport strike' },
-    'Nobara': { c: '#f6a', d: 6, s: 6, w: 'hammer', rng: { m1: 60, sp: 400 }, desc: 'Resonance: Pins enemy in place' },
-    'Geto': { c: '#74a', d: 5, s: 7, w: 'curse', rng: { m1: 75, sp: 250 }, desc: 'Maximum Uzumaki: Slow moving vortex' },
-    'Yuta': { c: '#aaf', d: 6, s: 7, w: 'katana', rng: { m1: 90, sp: 200 }, desc: 'Rika: Shadow arm grab' }
+    'Gojo': { c: '#fff', d: 6, s: 6, w: 'none', rng: { m1: 65, sp: 800 } },
+    'Sukuna': { c: '#f44', d: 7, s: 7, w: 'cleave', rng: { m1: 75, sp: 700 } },
+    'Itadori': { c: '#fd0', d: 10, s: 8, w: 'fist', rng: { m1: 55, sp: 120 } },
+    'Nanami': { c: '#dca', d: 12, s: 5, w: 'blade', rng: { m1: 70, sp: 100 } },
+    'Maki': { c: '#4a4', d: 6, s: 9, w: 'spear', rng: { m1: 130, sp: 300 } },
+    'Megumi': { c: '#44f', d: 5, s: 6, w: 'sword', rng: { m1: 80, sp: 400 } },
+    'Toji': { c: '#666', d: 11, s: 10, w: 'dagger', rng: { m1: 65, sp: 600 } },
+    'Nobara': { c: '#f6a', d: 8, s: 6, w: 'hammer', rng: { m1: 65, sp: 500 } },
+    'Geto': { c: '#74a', d: 6, s: 7, w: 'curse', rng: { m1: 80, sp: 400 } },
+    'Yuta': { c: '#aaf', d: 8, s: 7, w: 'katana', rng: { m1: 95, sp: 300 } },
+    'Naoya': { c: '#dfd', d: 6, s: 12, w: 'fist', rng: { m1: 60, sp: 500 } },
+    'Todo': { c: '#853', d: 9, s: 7, w: 'fist', rng: { m1: 70, sp: 800 } },
+    'Ryu': { c: '#f80', d: 7, s: 5, w: 'none', rng: { m1: 80, sp: 1000 } },
+    'Choso': { c: '#a44', d: 7, s: 7, w: 'blood', rng: { m1: 100, sp: 900 } },
+    'Hakari': { c: '#f0f', d: 8, s: 8, w: 'fist', rng: { m1: 60, sp: 200 } }
 };
 
 class Sorcerer {
     constructor(x, y, k, pNum, cpu) {
         this.k = k; this.s = chars[k]; this.x = x; this.y = y; this.w = 40; this.h = 90;
-        this.maxHp = 250; this.hp = 250; 
-        this.vx = 0; this.vy = 0; this.dir = pNum === 1 ? 1 : -1;
-        this.cpu = cpu; this.m1T = 0; this.spT = 0; this.swing = 0; this.fx = 0;
-        this.stun = 0;
+        this.hp = 300; this.maxHp = 300; this.vx = 0; this.vy = 0; this.dir = pNum === 1 ? 1 : -1;
+        this.cpu = cpu; this.m1T = 0; this.spT = 0; this.swing = 0; this.fx = 0; this.stun = 0;
+        this.proj = { active: false, x: 0, y: 0 };
     }
 
     draw(opp) {
-        if (this.stun > 0) ctx.filter = 'grayscale(1) contrast(2)';
+        ctx.save();
+        if (this.stun > 0) ctx.translate(Math.random()*6, 0);
+        
+        // Character Core
         ctx.strokeStyle = this.s.c; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(this.x + 20, this.y - 15, 12, 0, 7); ctx.stroke(); // Head
+        ctx.beginPath(); ctx.moveTo(this.x + 20, this.y); ctx.lineTo(this.x + 20, this.y + 50); ctx.stroke(); // Torso
         
-        // Character Body
-        ctx.beginPath(); ctx.arc(this.x + 20, this.y - 15, 12, 0, 7); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(this.x + 20, this.y); ctx.lineTo(this.x + 20, this.y + 50); ctx.stroke();
-        
-        let r = this.swing > 0 ? this.s.rng.m1 : 25;
-        let armX = this.x + 20 + (r * this.dir);
+        let armLen = this.swing > 0 ? this.s.rng.m1 : 30;
+        let armX = this.x + 20 + (armLen * this.dir);
         let armY = this.y + 20;
         ctx.beginPath(); ctx.moveTo(this.x + 20, this.y + 15); ctx.lineTo(armX, armY); ctx.stroke();
 
-        // UNIQUE SKILL VISUALS
-        if(this.fx > 0) {
+        // Weapon Renderers
+        ctx.lineWidth = 3;
+        if(this.s.w === 'spear') { 
+            ctx.strokeStyle = '#944'; ctx.beginPath(); ctx.moveTo(armX, armY); ctx.lineTo(armX+(60*this.dir), armY); ctx.stroke();
+            ctx.fillStyle = '#ccc'; ctx.beginPath(); ctx.moveTo(armX+(60*this.dir), armY-5); ctx.lineTo(armX+(80*this.dir), armY); ctx.lineTo(armX+(60*this.dir), armY+5); ctx.fill();
+        }
+        if(this.s.w === 'katana' || this.s.w === 'blade') {
+            ctx.strokeStyle = '#eee'; ctx.beginPath(); ctx.moveTo(armX, armY); ctx.quadraticCurveTo(armX+(20*this.dir), armY-25, armX+(40*this.dir), armY-45); ctx.stroke();
+        }
+
+        // Skill Visuals
+        if (this.proj.active) {
             ctx.save();
-            if(this.k === 'Gojo') {
-                ctx.fillStyle = '#a0f'; ctx.beginPath(); 
-                ctx.arc(this.x+20 + (600-this.fx*10)*this.dir, this.y+20, 40, 0, 7); ctx.fill();
-                ctx.shadowBlur = 20; ctx.shadowColor = '#a0f';
-            }
-            if(this.k === 'Sukuna') {
-                ctx.strokeStyle = '#f00'; ctx.lineWidth = 2;
-                for(let i=0; i<10; i++) {
-                    ctx.beginPath(); ctx.moveTo(opp.x-50, opp.y+(i*10)); ctx.lineTo(opp.x+100, opp.y+(i*10)-20); ctx.stroke();
-                }
-            }
-            if(this.k === 'Yuta') {
-                ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.beginPath();
-                ctx.arc(opp.x+20, opp.y+20, 50, 0, 7); ctx.fill();
-                ctx.strokeStyle = '#fff'; ctx.stroke();
-            }
-            if(this.k === 'Megumi') {
-                ctx.fillStyle = '#444'; ctx.fillRect(opp.x, opp.y+this.h-10, 40, 10);
+            if (this.k === 'Gojo') {
+                let g = ctx.createRadialGradient(this.proj.x, this.proj.y, 5, this.proj.x, this.proj.y, 45);
+                g.addColorStop(0, '#fff'); g.addColorStop(0.5, '#a0f'); g.addColorStop(1, 'transparent');
+                ctx.fillStyle = g; ctx.beginPath(); ctx.arc(this.proj.x, this.proj.y, 50, 0, 7); ctx.fill();
+            } else if (this.k === 'Ryu') {
+                ctx.fillStyle = '#f80'; ctx.shadowBlur = 15; ctx.shadowColor = '#f80';
+                ctx.beginPath(); ctx.arc(this.proj.x, this.proj.y, 35, 0, 7); ctx.fill();
+            } else if (this.k === 'Choso') {
+                ctx.fillStyle = '#f00'; ctx.fillRect(this.proj.x, this.proj.y-2, 80 * this.dir, 5);
             }
             ctx.restore();
         }
 
+        if (this.fx > 0) {
+            if (this.k === 'Itadori') { // Black Flash Sparks
+                ctx.strokeStyle = '#f00'; ctx.lineWidth = 3;
+                for(let i=0; i<6; i++) { ctx.beginPath(); ctx.moveTo(opp.x+20, opp.y+20); ctx.lineTo(opp.x+20+(Math.random()-0.5)*120, opp.y+20+(Math.random()-0.5)*120); ctx.stroke(); }
+                ctx.fillStyle = '#0cf'; ctx.beginPath(); ctx.arc(armX, armY, 15, 0, 7); ctx.fill();
+            }
+            if (this.k === 'Sukuna') {
+                ctx.strokeStyle = '#f44'; ctx.lineWidth = 1;
+                for(let i=0; i<10; i++) { ctx.beginPath(); ctx.moveTo(opp.x-30, opp.y+(i*12)); ctx.lineTo(opp.x+70, opp.y+(i*12)-20); ctx.stroke(); }
+            }
+        }
+
+        // Legs
+        ctx.strokeStyle = this.s.c; ctx.lineWidth = 4;
         ctx.beginPath(); ctx.moveTo(this.x + 20, this.y + 50); ctx.lineTo(this.x, this.y + 90); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(this.x + 20, this.y + 50); ctx.lineTo(this.x + 40, this.y + 90); ctx.stroke();
-        ctx.filter = 'none';
+        ctx.restore();
     }
 
     update(opp) {
         if (paused) return;
+        
+        if (this.proj.active) {
+            this.proj.x += (this.k === 'Choso' ? 26 : 14) * this.dir;
+            let d = Math.abs(this.proj.x - (opp.x + 20));
+            if (d < 50 && Math.abs(this.proj.y - opp.y) < 100) {
+                opp.hp -= (this.k === 'Ryu' ? 65 : 45);
+                opp.stun = 20; this.proj.active = false;
+            }
+            if (this.proj.x < 0 || this.proj.x > canvas.width) this.proj.active = false;
+        }
+
         if (this.stun > 0) { this.stun--; this.vx = 0; }
         else {
             this.x += this.vx; this.y += this.vy;
             if (this.y + this.h < canvas.height - 50) this.vy += 0.8; 
             else { this.y = canvas.height - 140; this.vy = 0; }
+            this.vx *= 0.85; 
         }
+        
         this.x = Math.max(0, Math.min(canvas.width - this.w, this.x));
         if (this.m1T > 0) this.m1T--; if (this.spT > 0) this.spT--; if (this.swing > 0) this.swing--;
         if (this.fx > 0) this.fx--;
         if (this.cpu) this.ai(opp);
     }
 
-    atk(opp) {
-        if (this.m1T > 0 || this.stun > 0 || paused) return; 
-        this.m1T = 18; this.swing = 8;
-        if (Math.abs((this.x+20) - (opp.x+20)) < this.s.rng.m1) {
-            opp.hp -= this.s.d; 
-            opp.vx = this.dir * 5; // Slight knockback
+    spec(opp) {
+        if (this.spT > 0 || this.stun > 0) return; 
+        this.spT = 800; this.fx = 60;
+        let d = Math.abs((this.x+20) - (opp.x+20));
+
+        switch(this.k) {
+            case 'Gojo': case 'Ryu': case 'Choso':
+                this.proj.active = true; this.proj.x = this.x + 20; this.proj.y = this.y + 20;
+                break;
+            case 'Todo': 
+                if (d < 800) { let tx = this.x; this.x = opp.x; opp.x = tx; opp.stun = 35; }
+                break;
+            case 'Naoya': 
+                this.vx = this.dir * 55; if (d < 500) { opp.hp -= 45; opp.stun = 45; }
+                break;
+            case 'Hakari': 
+                this.hp = Math.min(this.maxHp, this.hp + 120); this.spT = 450;
+                break;
+            case 'Itadori': if(d < 120) { opp.hp -= 90; opp.stun = 40; opp.vx = this.dir * 45; } break;
+            case 'Sukuna': if(d < 700) { opp.hp -= 60; opp.stun = 15; } break;
+            case 'Toji': this.x = opp.x - (50 * this.dir); opp.hp -= 50; break;
+            default: if(d < this.s.rng.sp) { opp.hp -= 40; opp.stun = 20; this.vx = this.dir * 25; }
         }
     }
 
-    spec(opp) {
-        if (this.spT > 0 || this.stun > 0 || paused) return; 
-        this.spT = 600; this.fx = 50;
-        let dist = Math.abs((this.x+20) - (opp.x+20));
-
-        if (this.k === 'Toji') { this.x = opp.x - (50*this.dir); opp.hp -= 40; }
-        else if (this.k === 'Nobara' || this.k === 'Megumi') { 
-            if (dist < this.s.rng.sp) { opp.hp -= 20; opp.stun = 60; } 
-        }
-        else if (this.k === 'Nanami') {
-             if (dist < this.s.rng.sp) { opp.hp -= 60; } // Heavy Damage
-        }
-        else if (dist < this.s.rng.sp) {
-            opp.hp -= 35;
-            this.vx = this.dir * 20;
+    atk(opp) {
+        if (this.m1T > 0 || this.stun > 0) return; 
+        this.m1T = 45; this.swing = 12;
+        if (Math.abs((this.x+20) - (opp.x+20)) < this.s.rng.m1) {
+            opp.hp -= this.s.d;
+            opp.vx = this.dir * 12;
         }
     }
 
     ai(opp) {
         if (this.stun > 0) return;
-        this.vx = (opp.x < this.x) ? -3.5 : 3.5; this.dir = (opp.x < this.x) ? -1 : 1;
-        if (Math.abs(this.x - opp.x) < this.s.rng.m1) this.atk(opp);
-        if (Math.abs(this.x - opp.x) < 200 && Math.random() < 0.01) this.spec(opp);
+        let d = Math.abs(this.x - opp.x);
+        let ideal = (this.k === 'Ryu' || this.k === 'Choso' || this.k === 'Gojo') ? 400 : 60;
+        
+        if (d > ideal + 30) this.vx = (opp.x < this.x ? -this.s.s : this.s.s);
+        else if (d < ideal - 30) this.vx = (opp.x < this.x ? this.s.s : -this.s.s);
+        
+        this.dir = (opp.x < this.x) ? -1 : 1;
+        if (d < this.s.rng.m1 && Math.random() < 0.04) this.atk(opp);
+        if (d < this.s.rng.sp && Math.random() < 0.015) this.spec(opp);
     }
 }
 
@@ -126,8 +171,8 @@ function handleTouch(e) {
     inputs.p1 = { l:0, r:0, u:0, a:0, s:0 }; inputs.p2 = { l:0, r:0, u:0, a:0, s:0 };
     for (let t of e.touches) {
         for (let b of btns) {
-            let rect = b.getBoundingClientRect();
-            if (t.clientX >= rect.left && t.clientX <= rect.right && t.clientY >= rect.top && t.clientY <= rect.bottom) {
+            let r = b.getBoundingClientRect();
+            if (t.clientX >= r.left && t.clientX <= r.right && t.clientY >= r.top && t.clientY <= r.bottom) {
                 let p = b.dataset.p === "1" ? inputs.p1 : inputs.p2;
                 p[b.dataset.v] = 1;
             }
@@ -145,9 +190,9 @@ function initMode(m) {
     document.getElementById('m-char').style.display = 'block';
     const g = document.getElementById('char-grid');
     Object.keys(chars).forEach(c => {
-        const b = document.createElement('button'); b.innerHTML = `${c}<br><span style="font-size:7px; color:#aaa">${chars[c].desc}</span>`;
+        const b = document.createElement('button'); b.innerText = c;
         b.onclick = () => { 
-            if (!p1C) { p1C = c; document.getElementById('sel-title').innerText = "PLAYER 2"; if (mode === '1P') { p2C = 'Sukuna'; startGame(); } } 
+            if (!p1C) { p1C = c; document.getElementById('sel-title').innerText = "PLAYER 2 SELECTION"; if (mode === '1P') { p2C = 'Sukuna'; startGame(); } } 
             else { p2C = c; startGame(); }
         };
         g.appendChild(b);
@@ -160,7 +205,7 @@ function startGame() {
     document.getElementById('controls').style.display = 'block';
     if (mode === '2P') document.getElementById('p2-pad').style.display = 'flex';
     p1 = new Sorcerer(150, 100, p1C, 1, false);
-    p2 = new Sorcerer(canvas.width - 200, 100, p2C, 2, mode === '1P');
+    p2 = new Sorcerer(canvas.width - 250, 100, p2C, 2, mode === '1P');
     active = true; resize(); loop();
 }
 
@@ -170,29 +215,25 @@ window.onresize = resize; resize();
 function loop() {
     if (active && !paused) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#111'; ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
+        ctx.fillStyle = '#151515'; ctx.fillRect(0, canvas.height - 50, canvas.width, 50); // Ground
         
-        p1.vx = inputs.p1.l ? -p1.s.s : inputs.p1.r ? p1.s.s : 0;
-        if (p1.vx !== 0) p1.dir = p1.vx > 0 ? 1 : -1;
-        if (inputs.p1.u && p1.vy === 0) p1.vy = -18;
-        if (inputs.p1.a) p1.atk(p2);
-        if (inputs.p1.s) p1.spec(p2);
+        [p1, p2].forEach((p, i) => {
+            let opp = i === 0 ? p2 : p1;
+            let inp = i === 0 ? inputs.p1 : inputs.p2;
+            if(!p.cpu) {
+                p.vx = inp.l ? -p.s.s : inp.r ? p.s.s : 0;
+                if (p.vx !== 0) p.dir = p.vx > 0 ? 1 : -1;
+                if (inp.u && p.vy === 0) p.vy = -18;
+                if (inp.a) p.atk(opp);
+                if (inp.s) p.spec(opp);
+            }
+            p.update(opp); p.draw(opp);
+        });
 
-        if (mode === '2P') {
-            p2.vx = inputs.p2.l ? -p2.s.s : inputs.p2.r ? p2.s.s : 0;
-            if (p2.vx !== 0) p2.dir = p2.vx > 0 ? 1 : -1;
-            if (inputs.p2.u && p2.vy === 0) p2.vy = -18;
-            if (inputs.p2.a) p2.atk(p1);
-            if (inputs.p2.s) p2.spec(p1);
-        }
-
-        p1.update(p2); p2.update(p1);
-        p1.draw(p2); p2.draw(p1);
-        
         document.getElementById('p1-hp').style.width = (p1.hp / p1.maxHp * 100) + '%';
         document.getElementById('p2-hp').style.width = (p2.hp / p2.maxHp * 100) + '%';
-        document.getElementById('p1-sp').style.width = ((600 - p1.spT) / 6) + '%';
-        document.getElementById('p2-sp').style.width = ((600 - p2.spT) / 6) + '%';
+        document.getElementById('p1-sp').style.width = ((800 - p1.spT) / 8) + '%';
+        document.getElementById('p2-sp').style.width = ((800 - p2.spT) / 8) + '%';
 
         if (p1.hp <= 0 || p2.hp <= 0) {
             active = false; document.getElementById('end-screen').style.display = 'flex';
