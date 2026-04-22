@@ -15,7 +15,7 @@
             <button class="menu-btn" onclick="initMode('2P')">2P VERSUS</button>
         </div>
         <div id="m-char" style="display:none; width: 95%;">
-            <h2 id="sel-title">CHOOSE YOUR SORCERER</h2>
+            <h2 id="sel-title">SELECT SORCERER</h2>
             <div class="grid" id="char-grid"></div>
         </div>
     </div>
@@ -33,12 +33,12 @@
 
     <div id="ui-layer">
         <div id="p1-hud" class="hud">
-            <div id="p1-n" class="char-name">P1</div>
+            <div class="char-name">P1</div>
             <div class="bar"><div id="p1-hp" class="hp-f"></div></div>
             <div class="bar" style="height:6px; margin-top:4px;"><div id="p1-sp" class="sp-f"></div></div>
         </div>
         <div id="p2-hud" class="hud">
-            <div id="p2-n" class="char-name">P2</div>
+            <div class="char-name" style="text-align:right">P2</div>
             <div class="bar"><div id="p2-hp" class="hp-f"></div></div>
             <div class="bar" style="height:6px; margin-top:4px;"><div id="p2-sp" class="sp-f"></div></div>
         </div>
@@ -49,26 +49,26 @@
     </div>
 
     <div id="controls" class="ctrl-container">
-        <div id="p1-pad" class="side-container" style="left: 20px;">
+        <div id="p1-pad" class="corner-pad left">
             <div class="btn btn-jump" data-p="1" data-v="u">JUMP</div>
-            <div class="row" style="gap: 60px;">
+            <div class="btn-group">
                 <div class="btn btn-dir" data-p="1" data-v="l">←</div>
                 <div class="btn btn-dir" data-p="1" data-v="r">→</div>
             </div>
-            <div class="row" style="gap: 50px; margin-top: 20px;">
-                <div class="btn btn-m1" data-p="1" data-v="a">M1</div>
+            <div class="btn-group">
+                <div class="btn btn-atk" data-p="1" data-v="a">ATK</div>
                 <div class="btn btn-skill" data-p="1" data-v="s">SKILL</div>
             </div>
         </div>
 
-        <div id="p2-pad" class="side-container" style="right: 20px; display: none;">
+        <div id="p2-pad" class="corner-pad right" style="display:none;">
             <div class="btn btn-jump" data-p="2" data-v="u">JUMP</div>
-            <div class="row" style="gap: 60px;">
+            <div class="btn-group">
                 <div class="btn btn-dir" data-p="2" data-v="l">←</div>
                 <div class="btn btn-dir" data-p="2" data-v="r">→</div>
             </div>
-            <div class="row" style="gap: 50px; margin-top: 20px;">
-                <div class="btn btn-m1" data-p="2" data-v="a">M1</div>
+            <div class="btn-group">
+                <div class="btn btn-atk" data-p="2" data-v="a">ATK</div>
                 <div class="btn btn-skill" data-p="2" data-v="s">SKILL</div>
             </div>
         </div>
