@@ -1,7 +1,6 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 let mode = '1P', p1, p2, p1C = null, p2C = null, active = false, paused = false;
-
 const held = { p1L: false, p1R: false, p2L: false, p2R: false };
 
 const chars = {
@@ -27,8 +26,12 @@ class Sorcerer {
     draw() {
         ctx.save();
         this.frame++;
-        let cx = this.x + 20, cy = this.y + 30;
+        let cx = this.x + 20, cy = this.y; 
         if (this.stun > 0) ctx.translate(Math.random() * 5 - 2.5, 0);
+
+        // Ground Line
+        ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(0, canvas.height - 108); ctx.lineTo(canvas.width, canvas.height - 108); ctx.stroke();
 
         if (this.fx > 0) {
             ctx.shadowBlur = 15; ctx.shadowColor = this.s.c;
@@ -36,56 +39,52 @@ class Sorcerer {
                 ctx.strokeStyle = '#f00';
                 for(let i=0; i<3; i++){
                     ctx.beginPath(); let ox = Math.random()*150*this.dir;
-                    ctx.moveTo(cx+ox, cy-50); ctx.lineTo(cx+ox+20, cy+50); ctx.stroke();
+                    ctx.moveTo(cx+ox, cy-100); ctx.lineTo(cx+ox+20, cy); ctx.stroke();
                 }
             }
             if (this.k === 'Ryu' || this.k === 'Yuta') {
                 ctx.fillStyle = this.s.c; ctx.globalAlpha = 0.5;
                 let isClash = (p1.fx > 0 && p2.fx > 0 && (p1.k === 'Ryu' || p1.k === 'Yuta') && (p2.k === 'Ryu' || p2.k === 'Yuta'));
                 let beamLen = isClash ? Math.abs(canvas.width/2 - cx) : 2000;
-                ctx.fillRect(cx, cy-10, beamLen * this.dir, 30);
+                ctx.fillRect(cx, cy-50, beamLen * this.dir, 30);
                 if(isClash) {
                     ctx.globalAlpha = 1; ctx.fillStyle = "#fff"; ctx.shadowBlur = 30; ctx.shadowColor = "#fff";
-                    ctx.beginPath(); ctx.arc(canvas.width/2, cy+5, 15 + Math.random()*20, 0, 7); ctx.fill();
-                    for(let i=0; i<8; i++) {
-                        ctx.fillStyle = Math.random() > 0.5 ? p1.s.c : p2.s.c;
-                        ctx.fillRect(canvas.width/2 + (Math.random()*60-30), cy+5 + (Math.random()*60-30), 5, 5);
-                    }
+                    ctx.beginPath(); ctx.arc(canvas.width/2, cy-35, 15 + Math.random()*20, 0, 7); ctx.fill();
                 }
             }
         }
 
         if (this.proj.active) {
             ctx.fillStyle = this.s.c; ctx.shadowBlur = 10; ctx.shadowColor = this.s.c;
-            if (this.proj.type === 'NAIL') ctx.fillRect(this.proj.x, this.proj.y + 15, 18 * this.dir, 4);
-            else { ctx.beginPath(); let size = (this.proj.type==='PURPLE'||this.proj.type==='UZUMAKI')?45:15; ctx.arc(this.proj.x, this.proj.y+10, size,0,7); ctx.fill(); }
+            if (this.proj.type === 'NAIL') ctx.fillRect(this.proj.x, this.proj.y - 40, 18 * this.dir, 4);
+            else { ctx.beginPath(); let size = (this.proj.type==='PURPLE'||this.proj.type==='UZUMAKI')?45:15; ctx.arc(this.proj.x, this.proj.y-40, size,0,7); ctx.fill(); }
             ctx.shadowBlur = 0;
         }
 
         ctx.strokeStyle = this.jackpot > 0 ? '#0f0' : this.s.c; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(cx, cy - 45, 12, 0, 7); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(cx, cy - 33); ctx.lineTo(cx, cy + 10); ctx.stroke();
-        let armY = (this.m1T > 0 || this.fx > 0) ? cy - 5 : cy - 20;
-        ctx.beginPath(); ctx.moveTo(cx, cy - 30); ctx.lineTo(cx + (this.dir * 25), armY); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(cx, cy - 30); ctx.lineTo(cx - (this.dir * 15), cy - 10); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx, cy - 85, 12, 0, 7); ctx.stroke(); 
+        ctx.beginPath(); ctx.moveTo(cx, cy - 73); ctx.lineTo(cx, cy - 30); ctx.stroke(); 
+        let armY = (this.m1T > 0 || this.fx > 0) ? cy - 45 : cy - 60;
+        ctx.beginPath(); ctx.moveTo(cx, cy - 70); ctx.lineTo(cx + (this.dir * 25), armY); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx, cy - 70); ctx.lineTo(cx - (this.dir * 15), cy - 50); ctx.stroke();
         let walk = (Math.abs(this.vx) > 0.1) ? Math.sin(this.frame * 0.2) * 12 : 5;
-        ctx.beginPath(); ctx.moveTo(cx, cy + 10); ctx.lineTo(cx + walk, cy + 45); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(cx, cy + 10); ctx.lineTo(cx - walk, cy + 45); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx, cy - 30); ctx.lineTo(cx + walk, cy); ctx.stroke(); 
+        ctx.beginPath(); ctx.moveTo(cx, cy - 30); ctx.lineTo(cx - walk, cy); ctx.stroke();
         ctx.restore();
     }
 
     spec(opp) {
         if (this.spT > 0 || this.stun > 0) return;
         switch(this.k) {
-            case 'Nobara': this.proj = { active: true, x: this.x, y: this.y + 10, vx: this.dir * 24, type: 'NAIL' }; this.spT = 450; break;
+            case 'Nobara': this.proj = { active: true, x: this.x, y: this.y, vx: this.dir * 24, type: 'NAIL' }; this.spT = 450; break;
             case 'Hakari': if (Math.random() < 0.4) { this.jackpot = 600; this.spT = 225; } else { this.spT = 450; } break;
             case 'Gojo': this.proj = { active: true, x: this.x, y: this.y, vx: this.dir * 7, type: 'PURPLE' }; this.spT = 450; break;
             case 'Sukuna': this.fx = 40; this.spT = 450; break;
             case 'Itadori': this.vx = this.dir * 40; this.fx = 20; this.spT = 450; break;
             case 'Todo': let tx = this.x; this.x = opp.x; opp.x = tx; opp.stun = 30; this.spT = 250; break;
-            case 'Choso': this.proj = { active: true, x: this.x, y: this.y + 15, vx: this.dir * 30, type: 'BLOOD' }; this.spT = 450; break;
+            case 'Choso': this.proj = { active: true, x: this.x, y: this.y, vx: this.dir * 30, type: 'BLOOD' }; this.spT = 450; break;
             case 'Nanami': this.vx = this.dir * 32; this.fx = 15; this.spT = 450; break;
-            case 'Megumi': this.proj = { active: true, x: this.x, y: this.y + 40, vx: this.dir * 10, type: 'SHADOW' }; this.spT = 450; break;
+            case 'Megumi': this.proj = { active: true, x: this.x, y: this.y, vx: this.dir * 10, type: 'SHADOW' }; this.spT = 450; break;
             case 'Naoya': this.vx = this.dir * 55; this.fx = 35; this.spT = 450; break;
             case 'Geto': this.proj = { active: true, x: this.x, y: this.y, vx: this.dir * 5, type: 'UZUMAKI' }; this.spT = 450; break;
             case 'Ryu': case 'Yuta': this.fx = 130; this.spT = 450; break;
@@ -104,11 +103,11 @@ class Sorcerer {
             if (this.k === 'Nanami' && dist < 75) { opp.hp -= 50; opp.stun = 20; this.fx = 0; }
             if ((this.k === 'Toji' || this.k === 'Maki') && dist < 85) { opp.hp -= 4; opp.stun = 10; }
             let clashing = (p1.fx > 0 && p2.fx > 0 && (p1.k === 'Ryu' || p1.k === 'Yuta') && (p2.k === 'Ryu' || p2.k === 'Yuta'));
-            if (isBeaming && !clashing && dist < 2000 && Math.abs(this.y - (opp.y+30)) < 100) { opp.hp -= 2.2; opp.stun = 3; }
+            if (isBeaming && !clashing && dist < 2000 && Math.abs(this.y - opp.y) < 100) { opp.hp -= 2.2; opp.stun = 3; }
         }
         if (this.proj.active) {
             this.proj.x += this.proj.vx;
-            if (Math.abs(this.proj.x - (opp.x + 20)) < 60 && Math.abs(this.proj.y - (opp.y + 20)) < 90) {
+            if (Math.abs(this.proj.x - (opp.x + 20)) < 60 && Math.abs(this.proj.y - 40 - (opp.y - 40)) < 90) {
                 if (this.proj.type === 'NAIL') { opp.hp -= 35; opp.stun = 25; }
                 else if (this.proj.type === 'PURPLE') { opp.hp -= 80; opp.stun = 60; }
                 else if (this.proj.type === 'BLOOD') { opp.hp -= 35; opp.stun = 15; }
@@ -124,7 +123,7 @@ class Sorcerer {
             else if (!this.cpu) { if (held.p2L) { this.vx = -this.s.s; this.dir = -1; } if (held.p2R) { this.vx = this.s.s; this.dir = 1; } }
         }
         this.x += this.vx; this.y += this.vy; this.vx *= 0.82;
-        let ground = canvas.height - 140;
+        let ground = canvas.height - 110;
         if (!isBeaming) { if (this.y < ground) this.vy += 0.85; else { this.y = ground; this.vy = 0; } }
         if (this.jackpot > 0) { this.jackpot--; if (this.hp < 300) this.hp += 0.6; }
         if (this.stun > 0) this.stun--; if (this.spT > 0) this.spT--; if (this.m1T > 0) this.m1T--;
@@ -169,8 +168,8 @@ function updateSelectionTitle() {
 
 function startGame() {
     canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-    p1 = new Sorcerer(100, canvas.height - 140, p1C, 1, false);
-    p2 = new Sorcerer(canvas.width - 150, canvas.height - 140, p2C, 2, mode === '1P');
+    p1 = new Sorcerer(100, canvas.height - 110, p1C, 1, false);
+    p2 = new Sorcerer(canvas.width - 150, canvas.height - 110, p2C, 2, mode === '1P');
     document.getElementById('menu').classList.remove('active-menu');
     document.getElementById('pause-btn').style.display = 'block';
     document.getElementById('controls').style.display = 'block';
@@ -208,7 +207,7 @@ function togglePause() {
 }
 
 window.addEventListener('touchstart', e => {
-    e.preventDefault(); 
+    if (e.target.tagName !== 'BUTTON') e.preventDefault(); 
     [...e.touches].forEach(touch => {
         const b = document.elementFromPoint(touch.clientX, touch.clientY);
         if (!b || !b.dataset.v) return;
