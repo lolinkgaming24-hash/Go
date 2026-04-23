@@ -1,6 +1,6 @@
-gis.k const canvas = document.getElementById('game');
+const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-let mode = '1P', p1, p2, p1C, p2C, active = false, paused = false;
+let mode = '1P', p1, p2, p1C = null, p2C = null, active = false, paused = false;
 
 const held = { p1L: false, p1R: false, p2L: false, p2R: false };
 
@@ -24,7 +24,7 @@ class Sorcerer {
         this.jackpot = 0; this.frame = 0;
     }
 
-    draw(opp) {
+    draw() {
         ctx.save();
         this.frame++;
         if (this.stun > 0) ctx.translate(Math.random() * 4 - 2, 0);
@@ -35,7 +35,7 @@ class Sorcerer {
         
         let cx = this.x + 20, cy = this.y + 30;
         ctx.beginPath(); ctx.arc(cx, cy - 45, 12, 0, 7); ctx.stroke(); // Head
-        ctx.beginPath(); ctx.moveTo(cx, cy - 33); ctx.lineTo(cx, cy + 10); ctx.stroke(); // Body
+        ctx.beginPath(); ctx.moveTo(cx, cy - 33); ctx.lineTo(cx, cy + 10); ctx.stroke(); // Torso
         let armY = (this.m1T > 0) ? cy - 10 : cy - 20;
         ctx.beginPath(); ctx.moveTo(cx, cy - 30); ctx.lineTo(cx + (this.dir * 25), armY); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(cx, cy - 30); ctx.lineTo(cx - (this.dir * 15), cy - 10); ctx.stroke();
@@ -44,7 +44,7 @@ class Sorcerer {
         ctx.beginPath(); ctx.moveTo(cx, cy + 10); ctx.lineTo(cx - walk, cy + 45); ctx.stroke();
 
         if (this.fx > 0 && (this.k === 'Ryu' || this.k === 'Yuta')) {
-            ctx.fillStyle = this.s.c; ctx.globalAlpha = 0.7;
+            ctx.fillStyle = this.s.c; ctx.globalAlpha = 0.6;
             let isClash = (p1.fx > 0 && p2.fx > 0 && (p1.k === 'Ryu' || p1.k === 'Yuta') && (p2.k === 'Ryu' || p2.k === 'Yuta'));
             let beamLen = isClash ? Math.abs(canvas.width/2 - cx) : 2000;
             ctx.fillRect(cx, cy - 10, beamLen * this.dir, 30);
@@ -83,12 +83,12 @@ class Sorcerer {
 
         if (this.fx > 0) {
             this.fx--;
-            if ((this.k === 'Naoya' || this.k === 'Toji') && Math.abs(this.x - opp.x) < 60) {
-                opp.stun = this.k === 'Naoya' ? 50 : 10;
+            if ((this.k === 'Naoya' || this.k === 'Toji') && Math.abs(this.x - opp.x) < 65) {
+                opp.stun = (this.k === 'Naoya') ? 50 : 10;
                 opp.hp -= 0.5;
             }
-            let clashing = (p1.fx > 0 && p2.fx > 0 && (p1.k === 'Ryu' || p1.k === 'Yuta') && (p2.k === 'Ryu' || p2.k === 'Yuta'));
-            if ((this.k === 'Ryu' || this.k === 'Yuta') && !clashing && Math.abs(this.y - opp.y) < 100) {
+            let clash = (p1.fx > 0 && p2.fx > 0 && (p1.k === 'Ryu' || p1.k === 'Yuta') && (p2.k === 'Ryu' || p2.k === 'Yuta'));
+            if ((this.k === 'Ryu' || this.k === 'Yuta') && !clash && Math.abs(this.y - opp.y) < 100) {
                 let d = opp.x - this.x;
                 if ((this.dir === 1 && d > 0) || (this.dir === -1 && d < 0)) { opp.hp -= 1.5; opp.stun = 2; }
             }
@@ -96,7 +96,7 @@ class Sorcerer {
         
         if (this.proj.active) {
             this.proj.x += this.proj.vx;
-            if (Math.abs(this.proj.x - (opp.x + 20)) < 50) { opp.hp -= 35; opp.stun = 15; this.proj.active = false; }
+            if (Math.abs(this.proj.x - (opp.x + 20)) < 50) { opp.hp -= 35; opp.stun = 20; this.proj.active = false; }
             if (this.proj.x < 0 || this.proj.x > canvas.width) this.proj.active = false;
         }
 
@@ -126,15 +126,16 @@ class Sorcerer {
     }
 }
 
-function togglePause() { if(!active) return; paused = !paused; document.getElementById('pause-screen').style.display = paused ? 'flex' : 'none'; }
-
 function initMode(m) {
-    mode = m; document.getElementById('m-start').style.display = 'none'; document.getElementById('m-char').style.display = 'block';
+    mode = m; p1C = null; p2C = null;
+    document.getElementById('m-start').style.display = 'none';
+    document.getElementById('m-char').style.display = 'block';
     updateSelectionTitle();
     const g = document.getElementById('char-grid'); g.innerHTML = '';
     Object.keys(chars).forEach(c => {
         const b = document.createElement('button'); b.innerText = c;
-        b.onclick = () => {
+        b.onpointerdown = (e) => {
+            e.stopPropagation();
             if (!p1C) { p1C = c; if (mode === '1P') { p2C = 'Sukuna'; startGame(); } else updateSelectionTitle(); }
             else if (mode === '2P' && !p2C) { p2C = c; startGame(); }
         };
@@ -144,7 +145,7 @@ function initMode(m) {
 
 function updateSelectionTitle() {
     const t = document.getElementById('selection-title');
-    if (!p1C) { t.innerText = "PLAYER 1: SELECT CHARACTER"; t.style.color = "#fff"; }
+    if (!p1C) { t.innerText = "PLAYER 1: SELECT CHARACTER"; t.style.color = "#0af"; }
     else { t.innerText = "PLAYER 2: SELECT CHARACTER"; t.style.color = "#f33"; }
 }
 
@@ -163,7 +164,7 @@ function loop() {
     if (!active) return;
     if (!paused) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        p1.update(p2); p2.update(p1); p1.draw(p2); p2.draw(p1);
+        p1.update(p2); p2.update(p1); p1.draw(); p2.draw();
         document.getElementById('p1-hp').style.width = (p1.hp / 3) + '%';
         document.getElementById('p1-cd').style.width = ((400 - p1.spT) / 4) + '%';
         document.getElementById('p1-stun').innerText = p1.stun > 0 ? "FROZEN" : "";
@@ -181,14 +182,17 @@ function showWinScreen(w) {
     document.getElementById('win-screen').style.display = 'flex';
 }
 
+function togglePause() { if(!active) return; paused = !paused; document.getElementById('pause-screen').style.display = paused ? 'flex' : 'none'; }
+
 window.addEventListener('touchstart', e => {
     [...e.touches].forEach(touch => {
         const b = document.elementFromPoint(touch.clientX, touch.clientY);
         if (!b || !b.dataset.v) return;
-        const p = b.dataset.p === '1' ? p1 : p2;
-        const opp = b.dataset.p === '1' ? p2 : p1;
-        if (b.dataset.v === 'l') held[b.dataset.p === '1' ? 'p1L' : 'p2L'] = true;
-        if (b.dataset.v === 'r') held[b.dataset.p === '1' ? 'p1R' : 'p2R'] = true;
+        const pNum = b.dataset.p;
+        const p = (pNum === '1') ? p1 : p2;
+        const opp = (pNum === '1') ? p2 : p1;
+        if (b.dataset.v === 'l') held['p'+pNum+'L'] = true;
+        if (b.dataset.v === 'r') held['p'+pNum+'R'] = true;
         if (b.dataset.v === 'u' && p.vy === 0) p.vy = -18;
         if (b.dataset.v === 'a') p.atk(opp);
         if (b.dataset.v === 's') p.spec();
@@ -199,10 +203,9 @@ window.addEventListener('touchend', e => {
     held.p1L = held.p1R = held.p2L = held.p2R = false;
     [...e.touches].forEach(touch => {
         const b = document.elementFromPoint(touch.clientX, touch.clientY);
-        if (b && b.dataset.v === 'l') held[b.dataset.p === '1' ? 'p1L' : 'p2L'] = true;
-        if (b && b.dataset.v === 'r') held[b.dataset.p === '1' ? 'p1R' : 'p2R'] = true;
+        if (b && b.dataset.v === 'l') held['p'+b.dataset.p+'L'] = true;
+        if (b && b.dataset.v === 'r') held['p'+b.dataset.p+'R'] = true;
     });
 });
 
-window.onresize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
 window.onload = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
