@@ -5,14 +5,14 @@ let mode = '1P', p1, p2, p1C = null, p2C = null, active = false, paused = false;
 const held = { p1L: false, p1R: false, p2L: false, p2R: false };
 
 const chars = {
-    'Gojo': { c: '#fff', d: 7, s: 7, r: 70 }, 'Sukuna': { c: '#f33', d: 8, s: 7, r: 80 },
-    'Itadori': { c: '#fd0', d: 11, s: 8, r: 70 }, 'Maki': { c: '#4a4', d: 12, s: 10, r: 120 },
-    'Megumi': { c: '#44f', d: 6, s: 7, r: 70 }, 'Yuta': { c: '#f0f', d: 8, s: 7, r: 90 },
-    'Ryu': { c: '#0cf', d: 9, s: 5, r: 80 }, 'Naoya': { c: '#dfd', d: 7, s: 12, r: 60 },
-    'Nobara': { c: '#f6a', d: 8, s: 6, r: 65 }, 'Toji': { c: '#777', d: 14, s: 9, r: 95 },
-    'Todo': { c: '#853', d: 10, s: 8, r: 85 }, 'Geto': { c: '#442', d: 8, s: 6, r: 80 },
-    'Choso': { c: '#a44', d: 7, s: 7, r: 75 }, 'Hakari': { c: '#eee', d: 9, s: 8, r: 80 },
-    'Nanami': { c: '#ee0', d: 13, s: 7, r: 85 }
+    'Gojo': { c: '#fff', d: 7, s: 7 }, 'Sukuna': { c: '#f33', d: 8, s: 7 },
+    'Itadori': { c: '#fd0', d: 11, s: 8 }, 'Maki': { c: '#4a4', d: 12, s: 10 },
+    'Megumi': { c: '#44f', d: 6, s: 7 }, 'Yuta': { c: '#f0f', d: 8, s: 7 },
+    'Ryu': { c: '#0cf', d: 9, s: 5 }, 'Naoya': { c: '#dfd', d: 7, s: 12 },
+    'Nobara': { c: '#f6a', d: 8, s: 6 }, 'Toji': { c: '#777', d: 14, s: 9 },
+    'Todo': { c: '#853', d: 10, s: 8 }, 'Geto': { c: '#442', d: 8, s: 6 },
+    'Choso': { c: '#a44', d: 7, s: 7 }, 'Hakari': { c: '#eee', d: 9, s: 8 },
+    'Nanami': { c: '#ee0', d: 13, s: 7 }
 };
 
 class Sorcerer {
@@ -34,8 +34,8 @@ class Sorcerer {
         if(this.jackpot > 0) { ctx.shadowBlur = 15; ctx.shadowColor = '#0f0'; }
         
         let cx = this.x + 20, cy = this.y + 30;
-        ctx.beginPath(); ctx.arc(cx, cy - 45, 12, 0, 7); ctx.stroke(); // Head
-        ctx.beginPath(); ctx.moveTo(cx, cy - 33); ctx.lineTo(cx, cy + 10); ctx.stroke(); // Torso
+        ctx.beginPath(); ctx.arc(cx, cy - 45, 12, 0, 7); ctx.stroke(); 
+        ctx.beginPath(); ctx.moveTo(cx, cy - 33); ctx.lineTo(cx, cy + 10); ctx.stroke();
         let armY = (this.m1T > 0) ? cy - 10 : cy - 20;
         ctx.beginPath(); ctx.moveTo(cx, cy - 30); ctx.lineTo(cx + (this.dir * 25), armY); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(cx, cy - 30); ctx.lineTo(cx - (this.dir * 15), cy - 10); ctx.stroke();
@@ -88,7 +88,7 @@ class Sorcerer {
                 opp.hp -= 0.5;
             }
             let clash = (p1.fx > 0 && p2.fx > 0 && (p1.k === 'Ryu' || p1.k === 'Yuta') && (p2.k === 'Ryu' || p2.k === 'Yuta'));
-            if ((this.k === 'Ryu' || this.k === 'Yuta') && !clash && Math.abs(this.y - opp.y) < 100) {
+            if ((this.k === 'Ryu' || this.k === 'Yuta') && !clash && Math.abs(this.y - (opp.y + 30)) < 100) {
                 let d = opp.x - this.x;
                 if ((this.dir === 1 && d > 0) || (this.dir === -1 && d < 0)) { opp.hp -= 1.5; opp.stun = 2; }
             }
@@ -136,7 +136,11 @@ function initMode(m) {
         const b = document.createElement('button'); b.innerText = c;
         b.onpointerdown = (e) => {
             e.stopPropagation();
-            if (!p1C) { p1C = c; if (mode === '1P') { p2C = 'Sukuna'; startGame(); } else updateSelectionTitle(); }
+            if (!p1C) { 
+                p1C = c; 
+                if (mode === '1P') { p2C = 'Sukuna'; startGame(); } 
+                else updateSelectionTitle(); 
+            }
             else if (mode === '2P' && !p2C) { p2C = c; startGame(); }
         };
         g.appendChild(b);
@@ -153,7 +157,7 @@ function startGame() {
     canvas.width = window.innerWidth; canvas.height = window.innerHeight;
     p1 = new Sorcerer(100, canvas.height - 140, p1C, 1, false);
     p2 = new Sorcerer(canvas.width - 150, canvas.height - 140, p2C, 2, mode === '1P');
-    document.getElementById('menu').style.display = 'none';
+    document.getElementById('menu').classList.remove('active-menu');
     document.getElementById('pause-btn').style.display = 'block';
     document.getElementById('controls').style.display = 'block';
     if (mode === '2P') document.getElementById('p2-pad').style.display = 'block';
@@ -171,18 +175,28 @@ function loop() {
         document.getElementById('p2-hp').style.width = (p2.hp / 3) + '%';
         document.getElementById('p2-cd').style.width = ((400 - p2.spT) / 4) + '%';
         document.getElementById('p2-stun').innerText = p2.stun > 0 ? "FROZEN" : "";
-        if (p1.hp <= 0 || p2.hp <= 0) { active = false; showWinScreen(p1.hp <= 0 ? "PLAYER 2" : "PLAYER 1"); }
+        if (p1.hp <= 0 || p2.hp <= 0) { 
+            active = false; 
+            showWinScreen(p1.hp <= 0 ? "PLAYER 2" : "PLAYER 1"); 
+        }
     }
     requestAnimationFrame(loop);
 }
 
 function showWinScreen(w) {
+    const screen = document.getElementById('win-screen');
     document.getElementById('win-text').innerText = w + " WINS";
     document.getElementById('win-text').style.color = w === "PLAYER 1" ? "#0af" : "#f33";
-    document.getElementById('win-screen').style.display = 'flex';
+    screen.classList.add('active-menu');
 }
 
-function togglePause() { if(!active) return; paused = !paused; document.getElementById('pause-screen').style.display = paused ? 'flex' : 'none'; }
+function togglePause() {
+    if(!active) return;
+    paused = !paused;
+    const screen = document.getElementById('pause-screen');
+    if (paused) screen.classList.add('active-menu');
+    else screen.classList.remove('active-menu');
+}
 
 window.addEventListener('touchstart', e => {
     [...e.touches].forEach(touch => {
@@ -203,8 +217,9 @@ window.addEventListener('touchend', e => {
     held.p1L = held.p1R = held.p2L = held.p2R = false;
     [...e.touches].forEach(touch => {
         const b = document.elementFromPoint(touch.clientX, touch.clientY);
-        if (b && b.dataset.v === 'l') held['p'+b.dataset.p+'L'] = true;
-        if (b && b.dataset.v === 'r') held['p'+b.dataset.p+'R'] = true;
+        if (b && (b.dataset.v === 'l' || b.dataset.v === 'r')) {
+            // Keep status if other fingers are still there, simplified for now
+        }
     });
 });
 
