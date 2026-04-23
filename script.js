@@ -1,207 +1,106 @@
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-let mode = '1P', p1, p2, p1C = null, p2C = null, active = false, paused = false;
-const held = { p1L: false, p1R: false, p2L: false, p2R: false };
-
-const chars = {
-    'Gojo': { c: '#fff', d: 7, s: 7 }, 'Sukuna': { c: '#f33', d: 8, s: 7 },
-    'Itadori': { c: '#fd0', d: 11, s: 8 }, 'Maki': { c: '#4a4', d: 12, s: 10 },
-    'Megumi': { c: '#777', d: 6, s: 7 },
-    'Yuta': { c: '#f0f', d: 8, s: 7 },
-    'Ryu': { c: '#0cf', d: 9, s: 5 }, 'Naoya': { c: '#dfd', d: 7, s: 12 },
-    'Nobara': { c: '#f6a', d: 8, s: 6 }, 'Toji': { c: '#777', d: 14, s: 9 },
-    'Todo': { c: '#853', d: 10, s: 8 }, 'Geto': { c: '#442', d: 8, s: 6 },
-    'Choso': { c: '#a44', d: 7, s: 7 }, 'Hakari': { c: '#eee', d: 9, s: 8 },
-    'Nanami': { c: '#ee0', d: 13, s: 7 }
-};
-
-class Sorcerer {
-    constructor(x, y, k, pNum, cpu) {
-        this.k = k; this.s = chars[k]; this.x = x; this.y = y; this.pNum = pNum;
-        this.hp = 300; this.vx = 0; this.vy = 0; this.dir = pNum === 1 ? 1 : -1;
-        this.cpu = cpu; this.m1T = 0; this.spT = 0; this.fx = 0; this.stun = 0;
-        this.proj = { active: false, x: 0, y: 0, vx: 0, type: '' };
-        this.swarm = []; this.jackpot = 0; this.frame = 0;
-        this.poison = 0; this.inShadow = false;
-    }
-
-    draw() {
-        ctx.save();
-        this.frame++;
-        let cx = this.x + 20, cy = this.y; 
-        if (this.stun > 0) ctx.translate(Math.random() * 4 - 2, 0);
-
-        if (this.inShadow) {
-            ctx.globalAlpha = 0.4;
-            let bounce = Math.sin(this.frame * 0.15) * 10;
-            ctx.fillStyle = '#ff0';
-            ctx.beginPath();
-            ctx.moveTo(cx, cy - 110 + bounce);
-            ctx.lineTo(cx - 12, cy - 135 + bounce);
-            ctx.lineTo(cx + 12, cy - 135 + bounce);
-            ctx.fill();
-        }
-
-        // Draw Geto's Swarm
-        this.swarm.forEach(p => {
-            ctx.fillStyle = '#111'; ctx.strokeStyle = '#442'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.arc(p.x, p.y, 10, 0, 7); ctx.fill(); ctx.stroke();
-        });
-
-        if (this.proj.active) {
-            ctx.fillStyle = this.s.c; ctx.beginPath(); 
-            let sz = this.proj.type === 'PURPLE' ? 40 : 15;
-            ctx.arc(this.proj.x, this.proj.y-40, sz, 0, 7); ctx.fill();
-        }
-
-        ctx.strokeStyle = this.jackpot > 0 ? '#0f0' : this.s.c; ctx.lineWidth = 3;
-        if (this.k === 'Megumi') { ctx.shadowBlur = 5; ctx.shadowColor = '#fff'; }
-        if (this.poison > 0) ctx.strokeStyle = '#80f';
-
-        ctx.beginPath(); ctx.arc(cx, cy - 85, 12, 0, 7); ctx.stroke(); 
-        ctx.beginPath(); ctx.moveTo(cx, cy - 73); ctx.lineTo(cx, cy - 30); ctx.stroke(); 
-        let armY = (this.m1T > 0) ? cy - 45 : cy - 60;
-        ctx.beginPath(); ctx.moveTo(cx, cy - 70); ctx.lineTo(cx + (this.dir * 25), armY); ctx.stroke();
-        let walk = (Math.abs(this.vx) > 0.2) ? Math.sin(this.frame * 0.2) * 12 : 5;
-        ctx.beginPath(); ctx.moveTo(cx, cy - 30); ctx.lineTo(cx + walk, cy); ctx.stroke(); 
-        ctx.beginPath(); ctx.moveTo(cx, cy - 30); ctx.lineTo(cx - walk, cy); ctx.stroke();
-        ctx.restore();
-    }
-
-    update(opp) {
-        if (!active || paused) return;
-        if (this.poison > 0) { this.poison--; if (this.poison % 60 === 0) this.hp -= 2; }
-
-        this.swarm = this.swarm.filter(p => {
-            p.x += p.vx;
-            let d = Math.sqrt((p.x - (opp.x+20))**2 + (p.y - (opp.y-40))**2);
-            if (d < 40) { opp.hp -= 15; opp.stun = 15; return false; }
-            return p.x > -50 && p.x < canvas.width + 50;
-        });
-
-        if (this.proj.active) {
-            this.proj.x += this.proj.vx;
-            if (Math.abs(this.proj.x - (opp.x+20)) < 50) {
-                opp.hp -= (this.proj.type==='PURPLE'?80:30); opp.stun = 30;
-                if(this.proj.type==='BLOOD') opp.poison = 180;
-                this.proj.active = false;
-            }
-        }
-
-        if (this.stun <= 0) {
-            let spd = this.inShadow ? this.s.s * 1.6 : this.s.s;
-            if (this.pNum === 1) { if (held.p1L) { this.vx = -spd; this.dir = -1; } if (held.p1R) { this.vx = spd; this.dir = 1; } }
-            else if (!this.cpu) { if (held.p2L) { this.vx = -spd; this.dir = -1; } if (held.p2R) { this.vx = spd; this.dir = 1; } }
-        }
-
-        this.x += this.vx; this.y += this.vy; this.vx *= 0.85;
-        // Screen Borders
-        if (this.x < 0) this.x = 0; if (this.x > canvas.width - 40) this.x = canvas.width - 40;
-        if (this.y < canvas.height - 110) this.vy += 0.8; else { this.y = canvas.height - 110; this.vy = 0; }
-        if (this.stun > 0) this.stun--; if (this.spT > 0) this.spT--; if (this.m1T > 0) this.m1T--;
-        if (this.cpu) this.ai(opp);
-    }
-
-    atk(opp) {
-        if (this.stun > 0 || this.m1T > 0) return;
-        this.m1T = 15;
-        if (Math.abs(this.x - opp.x) < 80) {
-            opp.hp -= (this.inShadow ? this.s.d + 15 : this.s.d);
-            opp.stun = this.inShadow ? 60 : 12; opp.vx = this.dir * 8;
-        }
-    }
-
-    spec(opp) {
-        if (this.spT > 0 || this.stun > 0) return;
-        if (this.k === 'Geto') {
-            for(let i=0; i<3; i++) this.swarm.push({x:this.x, y:this.y-20-(i*25), vx:this.dir*15});
-            this.spT = 350;
-        } else if (this.k === 'Megumi') {
-            this.inShadow = !this.inShadow; this.spT = 300;
-        } else {
-            this.proj = { active: true, x: this.x, y: this.y, vx: this.dir * 12, type: this.k === 'Gojo' ? 'PURPLE' : 'BLOOD' };
-            this.spT = 400;
-        }
-    }
-
-    ai(opp) {
-        let d = Math.abs(this.x - opp.x);
-        if (d > 120) this.vx = opp.x < this.x ? -this.s.s : this.s.s;
-        else if (Math.random() < 0.05) this.atk(opp);
-        if (Math.random() < 0.01) this.spec(opp);
-    }
+* {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
 }
 
-function initMode(m) {
-    mode = m; p1C = null; p2C = null;
-    document.getElementById('m-start').style.display = 'none';
-    document.getElementById('m-char').style.display = 'flex';
-    updateSelectionTitle();
-    const g = document.getElementById('char-grid'); g.innerHTML = '';
-    Object.keys(chars).forEach(c => {
-        const b = document.createElement('button'); b.innerText = c;
-        b.onclick = () => {
-            if (!p1C) { p1C = c; if (mode === '1P') { p2C = 'Sukuna'; startGame(); } else updateSelectionTitle(); }
-            else if (!p2C) { p2C = c; startGame(); }
-        };
-        g.appendChild(b);
-    });
+body { 
+    margin: 0; background: #000; color: #fff; font-family: sans-serif; 
+    overflow: hidden; touch-action: none; 
 }
 
-function updateSelectionTitle() {
-    document.getElementById('sel-title').innerText = !p1C ? "SELECT PLAYER 1" : "SELECT PLAYER 2";
+canvas { display: block; width: 100vw; height: 100vh; background: #0a0a0a; position: fixed; top:0; left:0; z-index: 1; }
+
+/* HUD Styles */
+.hud { position: absolute; top: 15px; width: 38%; pointer-events: none; z-index: 10; }
+#p1-hud { left: 10px; } #p2-hud { right: 10px; }
+.bar { width: 100%; height: 12px; background: #222; border: 1px solid #444; border-radius: 6px; overflow: hidden; }
+.hp-f { width: 100%; height: 100%; background: #0f0; transition: width 0.2s; }
+.bar-cd { width: 100%; height: 6px; background: #111; border: 1px solid #333; border-radius: 3px; margin-top: 4px; overflow: hidden; }
+.cd-f { width: 0%; height: 100%; background: #0af; }
+.stun-txt { color: #f00; font-size: 10px; font-weight: bold; margin-top: 2px; height: 12px; text-transform: uppercase; }
+
+#pause-btn { 
+    position: fixed; top: 15px; left: 50%; transform: translateX(-50%); 
+    width: 50px; height: 50px; background: #1a1a1a; color: #fff; 
+    border: 2px solid #fff; border-radius: 50%; z-index: 1000; 
+    display: none; font-weight: bold; cursor: pointer; touch-action: manipulation;
 }
 
-function startGame() {
-    p1 = new Sorcerer(100, 400, p1C, 1, false);
-    p2 = new Sorcerer(600, 400, p2C, 2, mode === '1P');
-    document.getElementById('menu').classList.remove('active-menu');
-    document.getElementById('pause-btn').style.display = 'block';
-    const ctrl = document.getElementById('controls');
-    ctrl.style.display = 'block';
-    if (mode === '1P') { ctrl.classList.add('solo-layout'); document.getElementById('p2-pad').style.display = 'none'; }
-    else { ctrl.classList.remove('solo-layout'); document.getElementById('p2-pad').style.display = 'flex'; }
-    active = true; loop();
+/* Menu & Selection */
+.overlay { 
+    position: fixed; inset: 0; background: rgba(0,0,0,0.95); 
+    display: none; flex-direction: column; align-items: center; justify-content: center; 
+    z-index: 2000; pointer-events: none; 
+}
+.active-menu { display: flex !important; pointer-events: auto !important; }
+.title { font-size: 2.5rem; text-shadow: 0 0 10px #f00; margin-bottom: 20px; text-align: center; }
+.menu-btn { padding: 15px 30px; background: #222; color: #fff; border: 2px solid #fff; margin: 10px; font-weight: bold; touch-action: manipulation; }
+.grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; width: 95%; max-width: 600px; }
+.grid button { padding: 12px 2px; font-size: 10px; background: #111; color: #fff; border: 1px solid #555; text-transform: uppercase; touch-action: manipulation; }
+
+/* CONTROL ENGINE */
+.ctrl-container { position: fixed; inset: 0; pointer-events: none; z-index: 100; display: none; }
+
+/* Base Layout for Player Pads */
+.corner-pad { 
+    position: absolute; 
+    bottom: 35px; /* Lifted slightly for better thumb ergonomics */
+    display: flex; 
+    flex-direction: column; 
+    gap: 15px; 
+}
+.left { left: 20px; } 
+.right { right: 20px; }
+
+/* Default Split Row (Movement left, Attack right) */
+.split-row { display: flex; gap: 20px; align-items: flex-end; }
+.btn-col { display: flex; flex-direction: column; gap: 15px; }
+
+/* DYNAMIC SOLO LAYOUT (1P vs CPU) */
+/* This spreads the controls to opposite sides of the screen */
+.solo-layout #p1-pad { 
+    width: calc(100vw - 40px); 
+}
+.solo-layout .split-row { 
+    justify-content: space-between; 
+    width: 100%; 
 }
 
-function resetToMenu() {
-    active = false; paused = false;
-    document.getElementById('menu').classList.add('active-menu');
-    document.getElementById('m-start').style.display = 'flex';
-    document.getElementById('m-char').style.display = 'none';
-    document.getElementById('win-screen').classList.remove('active-menu');
-    document.getElementById('pause-screen').classList.remove('active-menu');
-    document.getElementById('pause-btn').style.display = 'none';
-    document.getElementById('controls').style.display = 'none';
+/* Button Styling */
+.btn { 
+    width: 75px; 
+    height: 75px; 
+    background: rgba(255,255,255,0.08); 
+    border: 2px solid rgba(255,255,255,0.8); 
+    border-radius: 18px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    pointer-events: auto !important; 
+    font-weight: bold; 
+    color: white; 
+    touch-action: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    font-size: 14px;
 }
 
-function togglePause() {
-    paused = !paused;
-    document.getElementById('pause-screen').classList.toggle('active-menu', paused);
+/* Special Case for Jump */
+.btn-jump { 
+    width: 170px; 
+    height: 45px; 
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    margin-bottom: 5px;
 }
 
-function loop() {
-    if (!active || paused) return;
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    p1.update(p2); p2.update(p1);
-    p1.draw(); p2.draw();
-    updateHUD();
-    if (p1.hp <= 0 || p2.hp <= 0) {
-        active = false;
-        document.getElementById('win-screen').classList.add('active-menu');
-        document.getElementById('win-txt').innerText = p1.hp <= 0 ? "PLAYER 2 WINS" : "PLAYER 1 WINS";
-    }
-    requestAnimationFrame(loop);
+/* Feedback when pressing */
+.btn:active {
+    background: rgba(255,255,255,0.3);
+    transform: scale(0.95);
 }
 
-function updateHUD() {
-    document.getElementById('p1-hp').style.width = (p1.hp/3) + "%";
-    document.getElementById('p2-hp').style.width = (p2.hp/3) + "%";
-    document.getElementById('p1-cd').style.width = (100 - (p1.spT/4)) + "%";
-    document.getElementById('p2-cd').style.width = (100 - (p2.spT/4)) + "%";
-    document.getElementById('p1-stun').innerText = p1.stun > 0 ? "STUNNED" : "";
-    document.getElementById('p2-stun').innerText = p2.stun > 0 ? "STUNNED" : "";
-}
-
-window.onresize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
-window.onresize();
+.btn-group { display: flex; gap: 15px; }
