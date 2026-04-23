@@ -1,9 +1,6 @@
 * {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
     user-select: none;
     outline: none;
     -webkit-tap-highlight-color: transparent;
@@ -30,7 +27,7 @@ canvas { display: block; width: 100vw; height: 100vh; background: #0a0a0a; posit
     position: fixed; top: 15px; left: 50%; transform: translateX(-50%); 
     width: 50px; height: 50px; background: #1a1a1a; color: #fff; 
     border: 2px solid #fff; border-radius: 50%; z-index: 1000; 
-    display: none; font-weight: bold; cursor: pointer; 
+    display: none; font-weight: bold; cursor: pointer; touch-action: manipulation;
 }
 
 .overlay { 
@@ -41,20 +38,20 @@ canvas { display: block; width: 100vw; height: 100vh; background: #0a0a0a; posit
 .active-menu { display: flex !important; pointer-events: auto !important; }
 
 .title { font-size: 2.5rem; text-shadow: 0 0 10px #f00; margin-bottom: 20px; text-align: center; }
-.menu-btn { padding: 15px 30px; background: #222; color: #fff; border: 2px solid #fff; margin: 10px; cursor: pointer; font-weight: bold; }
+.menu-btn { padding: 15px 30px; background: #222; color: #fff; border: 2px solid #fff; margin: 10px; font-weight: bold; touch-action: manipulation; }
 
 .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; width: 95%; max-width: 600px; }
-.grid button { padding: 12px 2px; font-size: 10px; background: #111; color: #fff; border: 1px solid #555; text-transform: uppercase; cursor: pointer; }
+.grid button { padding: 12px 2px; font-size: 10px; background: #111; color: #fff; border: 1px solid #555; text-transform: uppercase; touch-action: manipulation; }
 
 .ctrl-container { position: fixed; inset: 0; pointer-events: none; z-index: 100; display: none; }
 .corner-pad { position: absolute; bottom: 20px; display: flex; flex-direction: column; gap: 8px; }
 .left { left: 10px; } .right { right: 10px; }
 
 .btn { 
-    width: 75px; height: 75px; background: rgba(255,255,255,0.1); 
+    width: 70px; height: 70px; background: rgba(255,255,255,0.1); 
     border: 2px solid #fff; border-radius: 12px; display: flex; 
     align-items: center; justify-content: center; pointer-events: auto !important; 
-    font-weight: bold; color: white;
+    font-weight: bold; color: white; touch-action: none;
 }
-.btn-jump { width: 160px; height: 45px; }
+.btn-jump { width: 150px; height: 40px; }
 .btn-group { display: flex; gap: 10px; }
