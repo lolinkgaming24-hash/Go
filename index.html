@@ -20,7 +20,12 @@
         </div>
     </div>
 
-    <div id="pause-screen" class="overlay" style="display:none; z-index: 2000;">
+    <div id="win-screen" class="overlay" style="display:none; z-index: 5000;">
+        <h1 id="win-text" class="title">PLAYER 1 WINS</h1>
+        <button class="menu-btn" onclick="location.reload()">REMATCH</button>
+    </div>
+
+    <div id="pause-screen" class="overlay" style="display:none; z-index: 4000;">
         <h1>PAUSED</h1>
         <button class="menu-btn" onclick="togglePause()">RESUME</button>
         <button class="menu-btn" onclick="location.reload()">EXIT</button>
@@ -33,7 +38,7 @@
             <button class="menu-btn" onclick="initMode('2P')">2P VERSUS</button>
         </div>
         <div id="m-char" style="display:none; width: 95%;">
-            <h2>SELECT CHARACTER</h2>
+            <h2 id="selection-title">PLAYER 1: SELECT CHARACTER</h2>
             <div class="grid" id="char-grid"></div>
         </div>
     </div>
