@@ -20,18 +20,7 @@
         </div>
     </div>
 
-    <div id="win-screen" class="overlay" style="display:none;">
-        <h1 id="win-text" class="title">PLAYER 1 WINS</h1>
-        <button class="menu-btn" onclick="location.reload()">REMATCH</button>
-    </div>
-
-    <div id="pause-screen" class="overlay" style="display:none;">
-        <h1>PAUSED</h1>
-        <button class="menu-btn" onclick="togglePause()">RESUME</button>
-        <button class="menu-btn" onclick="location.reload()">EXIT</button>
-    </div>
-
-    <div id="menu" class="overlay">
+    <div id="menu" class="overlay active-menu">
         <h1 class="title">JJK STICKMAN</h1>
         <div id="m-start">
             <button class="menu-btn" onclick="initMode('1P')">1P vs CPU</button>
@@ -41,6 +30,17 @@
             <h2 id="selection-title">PLAYER 1: SELECT CHARACTER</h2>
             <div class="grid" id="char-grid"></div>
         </div>
+    </div>
+
+    <div id="win-screen" class="overlay">
+        <h1 id="win-text" class="title">PLAYER 1 WINS</h1>
+        <button class="menu-btn" onclick="location.reload()">REMATCH</button>
+    </div>
+
+    <div id="pause-screen" class="overlay">
+        <h1>PAUSED</h1>
+        <button class="menu-btn" onclick="togglePause()">RESUME</button>
+        <button class="menu-btn" onclick="location.reload()">EXIT</button>
     </div>
 
     <div id="controls" class="ctrl-container">
