@@ -6,8 +6,7 @@ const held = { p1L: false, p1R: false, p2L: false, p2R: false };
 const chars = {
     'Gojo': { c: '#fff', d: 7, s: 7 }, 'Sukuna': { c: '#f33', d: 8, s: 7 },
     'Itadori': { c: '#fd0', d: 11, s: 8 }, 'Maki': { c: '#4a4', d: 12, s: 10 },
-    'Megumi': { c: '#777', d: 6, s: 7 }, // Brightened Megumi
-    'Yuta': { c: '#f0f', d: 8, s: 7 },
+    'Megumi': { c: '#222', d: 6, s: 7 }, 'Yuta': { c: '#f0f', d: 8, s: 7 },
     'Ryu': { c: '#0cf', d: 9, s: 5 }, 'Naoya': { c: '#dfd', d: 7, s: 12 },
     'Nobara': { c: '#f6a', d: 8, s: 6 }, 'Toji': { c: '#777', d: 14, s: 9 },
     'Todo': { c: '#853', d: 10, s: 8 }, 'Geto': { c: '#442', d: 8, s: 6 },
@@ -22,8 +21,8 @@ class Sorcerer {
         this.cpu = cpu; this.m1T = 0; this.spT = 0; this.fx = 0; this.stun = 0;
         this.proj = { active: false, x: 0, y: 0, vx: 0, type: '' };
         this.jackpot = 0; this.frame = 0;
-        this.poison = 0;
-        this.inShadow = false;
+        this.poison = 0; // Choso's DOT
+        this.inShadow = false; // Megumi's Hide
     }
 
     draw() {
@@ -32,18 +31,8 @@ class Sorcerer {
         let cx = this.x + 20, cy = this.y; 
         if (this.stun > 0) ctx.translate(Math.random() * 5 - 2.5, 0);
 
-        // Megumi Visual: Shadow State
-        if (this.inShadow) {
-            ctx.globalAlpha = 0.4;
-            // Yellow Arrow Marker
-            let bounce = Math.sin(this.frame * 0.1) * 10;
-            ctx.fillStyle = '#ff0';
-            ctx.beginPath();
-            ctx.moveTo(cx, cy - 130 + bounce);
-            ctx.lineTo(cx - 10, cy - 150 + bounce);
-            ctx.lineTo(cx + 10, cy - 150 + bounce);
-            ctx.fill();
-        }
+        // Megumi Visual: Transparent when in shadow
+        if (this.inShadow) ctx.globalAlpha = 0.3;
 
         // Ground Line
         ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
@@ -77,16 +66,8 @@ class Sorcerer {
             ctx.shadowBlur = 0;
         }
 
-        // Stickman Drawing
-        ctx.strokeStyle = this.jackpot > 0 ? '#0f0' : this.s.c; 
-        ctx.lineWidth = 3;
-        
-        // Better visibility for Megumi
-        if(this.k === 'Megumi') {
-            ctx.shadowBlur = 5;
-            ctx.shadowColor = "#fff";
-        }
-
+        ctx.strokeStyle = this.jackpot > 0 ? '#0f0' : this.s.c; ctx.lineWidth = 3;
+        // Choso DOT effect: Purple aura if poisoned
         if (this.poison > 0) { ctx.strokeStyle = '#80f'; ctx.shadowBlur = 10; ctx.shadowColor = '#80f'; }
 
         ctx.beginPath(); ctx.arc(cx, cy - 85, 12, 0, 7); ctx.stroke(); 
@@ -111,7 +92,7 @@ class Sorcerer {
             case 'Todo': let tx = this.x; this.x = opp.x; opp.x = tx; opp.stun = 30; this.spT = 250; break;
             case 'Choso': this.proj = { active: true, x: this.x, y: this.y, vx: this.dir * 30, type: 'BLOOD' }; this.spT = 450; break;
             case 'Nanami': this.vx = this.dir * 32; this.fx = 15; this.spT = 450; break;
-            case 'Megumi': this.inShadow = !this.inShadow; this.spT = 300; break; // Toggles shadow on skill
+            case 'Megumi': this.inShadow = true; this.spT = 500; break; // Megumi hide
             case 'Naoya': this.vx = this.dir * 55; this.fx = 35; this.spT = 450; break;
             case 'Geto': this.proj = { active: true, x: this.x, y: this.y, vx: this.dir * 5, type: 'UZUMAKI' }; this.spT = 450; break;
             case 'Ryu': case 'Yuta': this.fx = 130; this.spT = 450; break;
@@ -122,6 +103,7 @@ class Sorcerer {
     update(opp) {
         if (!active || paused) return;
 
+        // Choso DOT logic (2 damage every 60 frames = 1 second)
         if (this.poison > 0) {
             this.poison--;
             if (this.poison % 60 === 0) this.hp -= 2;
@@ -143,15 +125,15 @@ class Sorcerer {
             if (Math.abs(this.proj.x - (opp.x + 20)) < 60 && Math.abs(this.proj.y - 40 - (opp.y - 40)) < 90) {
                 if (this.proj.type === 'NAIL') { opp.hp -= 35; opp.stun = 25; }
                 else if (this.proj.type === 'PURPLE') { opp.hp -= 80; opp.stun = 60; }
-                else if (this.proj.type === 'BLOOD') { opp.hp -= 35; opp.stun = 15; opp.poison = 180; }
+                else if (this.proj.type === 'BLOOD') { opp.hp -= 35; opp.stun = 15; opp.poison = 180; } // Choso hit
                 else if (this.proj.type === 'UZUMAKI') { opp.hp -= 90; opp.stun = 70; }
                 this.proj.active = false;
             }
             if (this.proj.x < -300 || this.proj.x > canvas.width + 300) this.proj.active = false;
         }
-        if (isBeaming) { this.vx = 0; this.vy = 0; } 
+        if (isBeaming) { this.vx = 0; this.vy = 0; } 
         else if (this.stun <= 0) {
-            let speed = this.inShadow ? this.s.s * 1.6 : this.s.s; 
+            let speed = this.inShadow ? this.s.s * 1.5 : this.s.s; // Move faster in shadow
             if (this.pNum === 1) { if (held.p1L) { this.vx = -speed; this.dir = -1; } if (held.p1R) { this.vx = speed; this.dir = 1; } }
             else if (!this.cpu) { if (held.p2L) { this.vx = -speed; this.dir = -1; } if (held.p2R) { this.vx = speed; this.dir = 1; } }
         }
@@ -169,13 +151,16 @@ class Sorcerer {
         
         if (Math.abs(this.x - opp.x) < 90 && Math.abs(this.y - opp.y) < 100) {
             if (this.inShadow) {
-                opp.hp -= (this.s.d + 15); // Shadow damage
-                opp.stun = 70; // Stays in shadow, but stuns them heavy
+                opp.hp -= (this.s.d + 20); // Extra shadow damage
+                opp.stun = 60; // Heavy stun
+                this.inShadow = false; // Exit shadow
             } else {
                 opp.hp -= this.s.d; 
                 opp.stun = 12; 
             }
             opp.vx = this.dir * 6;
+        } else if (this.inShadow) {
+            this.inShadow = false; // Exit shadow if we whiff attack
         }
     }
 
@@ -186,4 +171,93 @@ class Sorcerer {
         if (Math.random() < 0.015) this.spec(opp);
     }
 }
-// ... Rest of the helper functions (initMode, startGame, loop, etc.) stay the same
+
+function initMode(m) {
+    mode = m; p1C = null; p2C = null;
+    document.getElementById('m-start').style.display = 'none';
+    document.getElementById('m-char').style.display = 'block';
+    updateSelectionTitle();
+    const g = document.getElementById('char-grid'); g.innerHTML = '';
+    Object.keys(chars).forEach(c => {
+        const b = document.createElement('button'); b.innerText = c;
+        b.onpointerdown = (e) => {
+            e.stopPropagation();
+            if (!p1C) { p1C = c; if (mode === '1P') { p2C = 'Sukuna'; startGame(); } else updateSelectionTitle(); }
+            else if (mode === '2P' && !p2C) { p2C = c; startGame(); }
+        };
+        g.appendChild(b);
+    });
+}
+
+function updateSelectionTitle() {
+    const t = document.getElementById('selection-title');
+    if (!p1C) { t.innerText = "PLAYER 1: SELECT CHARACTER"; t.style.color = "#0af"; }
+    else { t.innerText = "PLAYER 2: SELECT CHARACTER"; t.style.color = "#f33"; }
+}
+
+function startGame() {
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    p1 = new Sorcerer(100, canvas.height - 110, p1C, 1, false);
+    p2 = new Sorcerer(canvas.width - 150, canvas.height - 110, p2C, 2, mode === '1P');
+    document.getElementById('menu').classList.remove('active-menu');
+    document.getElementById('pause-btn').style.display = 'block';
+    document.getElementById('controls').style.display = 'block';
+    if (mode === '2P') document.getElementById('p2-pad').style.display = 'block';
+    active = true; loop();
+}
+
+function loop() {
+    if (!active) return;
+    if (!paused) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        p1.update(p2); p2.update(p1); p1.draw(); p2.draw();
+        document.getElementById('p1-hp').style.width = (p1.hp / 3) + '%';
+        document.getElementById('p1-cd').style.width = ((450 - p1.spT) / 4.5) + '%';
+        document.getElementById('p1-stun').innerText = p1.stun > 0 ? "STUNNED" : "";
+        document.getElementById('p2-hp').style.width = (p2.hp / 3) + '%';
+        document.getElementById('p2-cd').style.width = ((450 - p2.spT) / 4.5) + '%';
+        document.getElementById('p2-stun').innerText = p2.stun > 0 ? "STUNNED" : "";
+        if (p1.hp <= 0 || p2.hp <= 0) { active = false; showWinScreen(p1.hp <= 0 ? "PLAYER 2" : "PLAYER 1"); }
+    }
+    requestAnimationFrame(loop);
+}
+
+function showWinScreen(w) {
+    const screen = document.getElementById('win-screen');
+    document.getElementById('win-text').innerText = w + " WINS";
+    document.getElementById('win-text').style.color = w === "PLAYER 1" ? "#0af" : "#f33";
+    screen.classList.add('active-menu');
+}
+
+function togglePause() {
+    if(!active) return; paused = !paused;
+    const screen = document.getElementById('pause-screen');
+    if (paused) screen.classList.add('active-menu'); else screen.classList.remove('active-menu');
+}
+
+window.addEventListener('touchstart', e => {
+    if (e.target.tagName !== 'BUTTON') e.preventDefault(); 
+    [...e.touches].forEach(touch => {
+        const b = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (!b || !b.dataset.v) return;
+        const pNum = b.dataset.p, p = (pNum === '1') ? p1 : p2, opp = (pNum === '1') ? p2 : p1;
+        const isBeaming = (p.fx > 0 && (p.k === 'Ryu' || p.k === 'Yuta'));
+        if (b.dataset.v === 'l') held['p'+pNum+'L'] = true;
+        if (b.dataset.v === 'r') held['p'+pNum+'R'] = true;
+        if (b.dataset.v === 'u' && p.vy === 0 && !isBeaming) p.vy = -19;
+        if (b.dataset.v === 'a') p.atk(opp);
+        if (b.dataset.v === 's') p.spec(opp);
+    });
+}, {passive: false});
+
+window.addEventListener('touchend', e => {
+    held.p1L = held.p1R = held.p2L = held.p2R = false;
+    [...e.touches].forEach(touch => {
+        const b = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (b && b.dataset.v === 'l') held['p'+b.dataset.p+'L'] = true;
+        if (b && b.dataset.v === 'r') held['p'+b.dataset.p+'R'] = true;
+    });
+});
+
+window.onresize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+window.onload = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
