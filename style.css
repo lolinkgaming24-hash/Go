@@ -1,4 +1,20 @@
-body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; touch-action: none; user-select: none; }
+* {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+}
+
+body { 
+    margin: 0; background: #000; color: #fff; font-family: sans-serif; 
+    overflow: hidden; touch-action: none; 
+}
+
 canvas { display: block; width: 100vw; height: 100vh; background: #0a0a0a; position: fixed; top:0; left:0; z-index: 1; }
 
 .hud { position: absolute; top: 15px; width: 38%; pointer-events: none; z-index: 10; }
@@ -10,7 +26,12 @@ canvas { display: block; width: 100vw; height: 100vh; background: #0a0a0a; posit
 .cd-f { width: 0%; height: 100%; background: #0af; }
 .stun-txt { color: #f00; font-size: 10px; font-weight: bold; margin-top: 2px; height: 12px; text-transform: uppercase; }
 
-#pause-btn { position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 50px; height: 50px; background: #1a1a1a; color: #fff; border: 2px solid #fff; border-radius: 50%; z-index: 1000; display: none; font-weight: bold; pointer-events: auto; }
+#pause-btn { 
+    position: fixed; top: 15px; left: 50%; transform: translateX(-50%); 
+    width: 50px; height: 50px; background: #1a1a1a; color: #fff; 
+    border: 2px solid #fff; border-radius: 50%; z-index: 1000; 
+    display: none; font-weight: bold; cursor: pointer; 
+}
 
 .overlay { 
     position: fixed; inset: 0; background: rgba(0,0,0,0.95); 
@@ -20,15 +41,20 @@ canvas { display: block; width: 100vw; height: 100vh; background: #0a0a0a; posit
 .active-menu { display: flex !important; pointer-events: auto !important; }
 
 .title { font-size: 2.5rem; text-shadow: 0 0 10px #f00; margin-bottom: 20px; text-align: center; }
-.menu-btn { padding: 15px 30px; background: #222; color: #fff; border: 2px solid #fff; margin: 10px; cursor: pointer; font-weight: bold; pointer-events: auto; }
+.menu-btn { padding: 15px 30px; background: #222; color: #fff; border: 2px solid #fff; margin: 10px; cursor: pointer; font-weight: bold; }
 
-.grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; width: 95%; max-width: 600px; pointer-events: auto; }
+.grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; width: 95%; max-width: 600px; }
 .grid button { padding: 12px 2px; font-size: 10px; background: #111; color: #fff; border: 1px solid #555; text-transform: uppercase; cursor: pointer; }
 
 .ctrl-container { position: fixed; inset: 0; pointer-events: none; z-index: 100; display: none; }
 .corner-pad { position: absolute; bottom: 20px; display: flex; flex-direction: column; gap: 8px; }
 .left { left: 10px; } .right { right: 10px; }
 
-.btn { width: 75px; height: 75px; background: rgba(255,255,255,0.1); border: 2px solid #fff; border-radius: 12px; display: flex; align-items: center; justify-content: center; pointer-events: auto !important; font-weight: bold; }
+.btn { 
+    width: 75px; height: 75px; background: rgba(255,255,255,0.1); 
+    border: 2px solid #fff; border-radius: 12px; display: flex; 
+    align-items: center; justify-content: center; pointer-events: auto !important; 
+    font-weight: bold; color: white;
+}
 .btn-jump { width: 160px; height: 45px; }
 .btn-group { display: flex; gap: 10px; }
