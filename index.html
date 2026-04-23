@@ -23,8 +23,8 @@
     <div id="menu" class="overlay active-menu">
         <h1 class="title">JJK STICKMAN</h1>
         <div id="m-start">
-            <button class="menu-btn" onclick="initMode('1P')">1P vs CPU</button>
-            <button class="menu-btn" onclick="initMode('2P')">2P VERSUS</button>
+            <button class="menu-btn" onpointerdown="initMode('1P')">1P vs CPU</button>
+            <button class="menu-btn" onpointerdown="initMode('2P')">2P VERSUS</button>
         </div>
         <div id="m-char" style="display:none; width: 95%;">
             <h2 id="selection-title">PLAYER 1: SELECT CHARACTER</h2>
@@ -34,13 +34,13 @@
 
     <div id="win-screen" class="overlay">
         <h1 id="win-text" class="title">PLAYER 1 WINS</h1>
-        <button class="menu-btn" onclick="location.reload()">REMATCH</button>
+        <button class="menu-btn" onpointerdown="location.reload()">REMATCH</button>
     </div>
 
     <div id="pause-screen" class="overlay">
         <h1>PAUSED</h1>
-        <button class="menu-btn" onclick="togglePause()">RESUME</button>
-        <button class="menu-btn" onclick="location.reload()">EXIT</button>
+        <button class="menu-btn" onpointerdown="togglePause()">RESUME</button>
+        <button class="menu-btn" onpointerdown="location.reload()">EXIT</button>
     </div>
 
     <div id="controls" class="ctrl-container">
@@ -68,7 +68,7 @@
         </div>
     </div>
 
-    <button id="pause-btn" onclick="togglePause()">II</button>
+    <button id="pause-btn" onpointerdown="togglePause()">II</button>
     <canvas id="game"></canvas>
     <script src="script.js"></script>
 </body>
