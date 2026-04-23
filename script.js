@@ -21,6 +21,8 @@ class Sorcerer {
         this.cpu = cpu; this.m1T = 0; this.spT = 0; this.fx = 0; this.stun = 0;
         this.proj = { active: false, x: 0, y: 0, vx: 0, type: '' };
         this.jackpot = 0; this.frame = 0;
+        this.poison = 0; // Choso's DOT
+        this.inShadow = false; // Megumi's Hide
     }
 
     draw() {
@@ -28,6 +30,9 @@ class Sorcerer {
         this.frame++;
         let cx = this.x + 20, cy = this.y; 
         if (this.stun > 0) ctx.translate(Math.random() * 5 - 2.5, 0);
+
+        // Megumi Visual: Transparent when in shadow
+        if (this.inShadow) ctx.globalAlpha = 0.3;
 
         // Ground Line
         ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
@@ -62,6 +67,9 @@ class Sorcerer {
         }
 
         ctx.strokeStyle = this.jackpot > 0 ? '#0f0' : this.s.c; ctx.lineWidth = 3;
+        // Choso DOT effect: Purple aura if poisoned
+        if (this.poison > 0) { ctx.strokeStyle = '#80f'; ctx.shadowBlur = 10; ctx.shadowColor = '#80f'; }
+
         ctx.beginPath(); ctx.arc(cx, cy - 85, 12, 0, 7); ctx.stroke(); 
         ctx.beginPath(); ctx.moveTo(cx, cy - 73); ctx.lineTo(cx, cy - 30); ctx.stroke(); 
         let armY = (this.m1T > 0 || this.fx > 0) ? cy - 45 : cy - 60;
@@ -84,7 +92,7 @@ class Sorcerer {
             case 'Todo': let tx = this.x; this.x = opp.x; opp.x = tx; opp.stun = 30; this.spT = 250; break;
             case 'Choso': this.proj = { active: true, x: this.x, y: this.y, vx: this.dir * 30, type: 'BLOOD' }; this.spT = 450; break;
             case 'Nanami': this.vx = this.dir * 32; this.fx = 15; this.spT = 450; break;
-            case 'Megumi': this.proj = { active: true, x: this.x, y: this.y, vx: this.dir * 10, type: 'SHADOW' }; this.spT = 450; break;
+            case 'Megumi': this.inShadow = true; this.spT = 500; break; // Megumi hide
             case 'Naoya': this.vx = this.dir * 55; this.fx = 35; this.spT = 450; break;
             case 'Geto': this.proj = { active: true, x: this.x, y: this.y, vx: this.dir * 5, type: 'UZUMAKI' }; this.spT = 450; break;
             case 'Ryu': case 'Yuta': this.fx = 130; this.spT = 450; break;
@@ -94,6 +102,13 @@ class Sorcerer {
 
     update(opp) {
         if (!active || paused) return;
+
+        // Choso DOT logic (2 damage every 60 frames = 1 second)
+        if (this.poison > 0) {
+            this.poison--;
+            if (this.poison % 60 === 0) this.hp -= 2;
+        }
+
         let isBeaming = (this.fx > 0 && (this.k === 'Ryu' || this.k === 'Yuta'));
         if (this.fx > 0) {
             this.fx--; let dist = Math.abs(this.x - opp.x);
@@ -110,17 +125,17 @@ class Sorcerer {
             if (Math.abs(this.proj.x - (opp.x + 20)) < 60 && Math.abs(this.proj.y - 40 - (opp.y - 40)) < 90) {
                 if (this.proj.type === 'NAIL') { opp.hp -= 35; opp.stun = 25; }
                 else if (this.proj.type === 'PURPLE') { opp.hp -= 80; opp.stun = 60; }
-                else if (this.proj.type === 'BLOOD') { opp.hp -= 35; opp.stun = 15; }
-                else if (this.proj.type === 'SHADOW') { opp.hp -= 30; opp.stun = 40; }
+                else if (this.proj.type === 'BLOOD') { opp.hp -= 35; opp.stun = 15; opp.poison = 180; } // Choso hit
                 else if (this.proj.type === 'UZUMAKI') { opp.hp -= 90; opp.stun = 70; }
                 this.proj.active = false;
             }
             if (this.proj.x < -300 || this.proj.x > canvas.width + 300) this.proj.active = false;
         }
-        if (isBeaming) { this.vx = 0; this.vy = 0; } 
+        if (isBeaming) { this.vx = 0; this.vy = 0; } 
         else if (this.stun <= 0) {
-            if (this.pNum === 1) { if (held.p1L) { this.vx = -this.s.s; this.dir = -1; } if (held.p1R) { this.vx = this.s.s; this.dir = 1; } }
-            else if (!this.cpu) { if (held.p2L) { this.vx = -this.s.s; this.dir = -1; } if (held.p2R) { this.vx = this.s.s; this.dir = 1; } }
+            let speed = this.inShadow ? this.s.s * 1.5 : this.s.s; // Move faster in shadow
+            if (this.pNum === 1) { if (held.p1L) { this.vx = -speed; this.dir = -1; } if (held.p1R) { this.vx = speed; this.dir = 1; } }
+            else if (!this.cpu) { if (held.p2L) { this.vx = -speed; this.dir = -1; } if (held.p2R) { this.vx = speed; this.dir = 1; } }
         }
         this.x += this.vx; this.y += this.vy; this.vx *= 0.82;
         let ground = canvas.height - 110;
@@ -132,7 +147,21 @@ class Sorcerer {
 
     atk(opp) {
         if (this.stun > 0 || this.m1T > 0 || (this.fx > 0 && (this.k === 'Ryu' || this.k === 'Yuta'))) return;
-        this.m1T = 18; if (Math.abs(this.x - opp.x) < 90 && Math.abs(this.y - opp.y) < 100) { opp.hp -= this.s.d; opp.stun = 12; opp.vx = this.dir * 6; }
+        this.m1T = 18; 
+        
+        if (Math.abs(this.x - opp.x) < 90 && Math.abs(this.y - opp.y) < 100) {
+            if (this.inShadow) {
+                opp.hp -= (this.s.d + 20); // Extra shadow damage
+                opp.stun = 60; // Heavy stun
+                this.inShadow = false; // Exit shadow
+            } else {
+                opp.hp -= this.s.d; 
+                opp.stun = 12; 
+            }
+            opp.vx = this.dir * 6;
+        } else if (this.inShadow) {
+            this.inShadow = false; // Exit shadow if we whiff attack
+        }
     }
 
     ai(opp) {
