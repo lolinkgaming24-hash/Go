@@ -21,9 +21,9 @@ class Sorcerer {
         this.hp = 300; this.vx = 0; this.vy = 0; this.dir = pNum === 1 ? 1 : -1;
         this.cpu = cpu; this.m1T = 0; this.spT = 0; this.fx = 0; this.stun = 0;
         this.proj = { active: false, x: 0, y: 0, vx: 0, type: '' };
-        this.swarm = []; // Specialized for Geto's new skill
         this.jackpot = 0; this.frame = 0;
-        this.poison = 0; this.inShadow = false;
+        this.poison = 0;
+        this.inShadow = false;
     }
 
     draw() {
@@ -32,47 +32,68 @@ class Sorcerer {
         let cx = this.x + 20, cy = this.y; 
         if (this.stun > 0) ctx.translate(Math.random() * 5 - 2.5, 0);
 
-        // Megumi Visual: Shadow State + Yellow Arrow Marker
+        // Megumi Visual: Shadow State
         if (this.inShadow) {
             ctx.globalAlpha = 0.4;
-            let bounce = Math.sin(this.frame * 0.15) * 10;
+            // Yellow Arrow Marker
+            let bounce = Math.sin(this.frame * 0.1) * 10;
             ctx.fillStyle = '#ff0';
             ctx.beginPath();
-            ctx.moveTo(cx, cy - 110 + bounce);
-            ctx.lineTo(cx - 12, cy - 135 + bounce);
-            ctx.lineTo(cx + 12, cy - 135 + bounce);
+            ctx.moveTo(cx, cy - 130 + bounce);
+            ctx.lineTo(cx - 10, cy - 150 + bounce);
+            ctx.lineTo(cx + 10, cy - 150 + bounce);
             ctx.fill();
         }
 
-        // Floor Line
+        // Ground Line
         ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(0, canvas.height - 108); ctx.lineTo(canvas.width, canvas.height - 108); ctx.stroke();
 
-        // Drawing Geto's Swarm
-        this.swarm.forEach(p => {
-            ctx.fillStyle = '#111'; ctx.strokeStyle = '#442'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.arc(p.x, p.y, 10, 0, 7); ctx.fill(); ctx.stroke();
-        });
+        if (this.fx > 0) {
+            ctx.shadowBlur = 15; ctx.shadowColor = this.s.c;
+            if (this.k === 'Sukuna') {
+                ctx.strokeStyle = '#f00';
+                for(let i=0; i<3; i++){
+                    ctx.beginPath(); let ox = Math.random()*150*this.dir;
+                    ctx.moveTo(cx+ox, cy-100); ctx.lineTo(cx+ox+20, cy); ctx.stroke();
+                }
+            }
+            if (this.k === 'Ryu' || this.k === 'Yuta') {
+                ctx.fillStyle = this.s.c; ctx.globalAlpha = 0.5;
+                let isClash = (p1.fx > 0 && p2.fx > 0 && (p1.k === 'Ryu' || p1.k === 'Yuta') && (p2.k === 'Ryu' || p2.k === 'Yuta'));
+                let beamLen = isClash ? Math.abs(canvas.width/2 - cx) : 2000;
+                ctx.fillRect(cx, cy-50, beamLen * this.dir, 30);
+                if(isClash) {
+                    ctx.globalAlpha = 1; ctx.fillStyle = "#fff"; ctx.shadowBlur = 30; ctx.shadowColor = "#fff";
+                    ctx.beginPath(); ctx.arc(canvas.width/2, cy-35, 15 + Math.random()*20, 0, 7); ctx.fill();
+                }
+            }
+        }
 
-        // Proj (Single ones)
         if (this.proj.active) {
             ctx.fillStyle = this.s.c; ctx.shadowBlur = 10; ctx.shadowColor = this.s.c;
-            ctx.beginPath(); let size = (this.proj.type==='PURPLE')?45:15; ctx.arc(this.proj.x, this.proj.y-40, size,0,7); ctx.fill();
+            if (this.proj.type === 'NAIL') ctx.fillRect(this.proj.x, this.proj.y - 40, 18 * this.dir, 4);
+            else { ctx.beginPath(); let size = (this.proj.type==='PURPLE'||this.proj.type==='UZUMAKI')?45:15; ctx.arc(this.proj.x, this.proj.y-40, size,0,7); ctx.fill(); }
             ctx.shadowBlur = 0;
         }
 
-        // Stickman
+        // Stickman Drawing
         ctx.strokeStyle = this.jackpot > 0 ? '#0f0' : this.s.c; 
         ctx.lineWidth = 3;
+        
+        // Better visibility for Megumi
+        if(this.k === 'Megumi') {
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = "#fff";
+        }
 
-        // Visual Aid for Megumi (White outline so he doesn't blend in)
-        if (this.k === 'Megumi') { ctx.shadowBlur = 4; ctx.shadowColor = '#fff'; }
         if (this.poison > 0) { ctx.strokeStyle = '#80f'; ctx.shadowBlur = 10; ctx.shadowColor = '#80f'; }
 
         ctx.beginPath(); ctx.arc(cx, cy - 85, 12, 0, 7); ctx.stroke(); 
         ctx.beginPath(); ctx.moveTo(cx, cy - 73); ctx.lineTo(cx, cy - 30); ctx.stroke(); 
         let armY = (this.m1T > 0 || this.fx > 0) ? cy - 45 : cy - 60;
         ctx.beginPath(); ctx.moveTo(cx, cy - 70); ctx.lineTo(cx + (this.dir * 25), armY); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx, cy - 70); ctx.lineTo(cx - (this.dir * 15), cy - 50); ctx.stroke();
         let walk = (Math.abs(this.vx) > 0.1) ? Math.sin(this.frame * 0.2) * 12 : 5;
         ctx.beginPath(); ctx.moveTo(cx, cy - 30); ctx.lineTo(cx + walk, cy); ctx.stroke(); 
         ctx.beginPath(); ctx.moveTo(cx, cy - 30); ctx.lineTo(cx - walk, cy); ctx.stroke();
@@ -82,88 +103,87 @@ class Sorcerer {
     spec(opp) {
         if (this.spT > 0 || this.stun > 0) return;
         switch(this.k) {
-            case 'Geto': // Curse Swarm: Fires 3 fast projectiles
-                for(let i=0; i<3; i++) {
-                    this.swarm.push({ x: this.x, y: this.y - 20 - (i*30), vx: this.dir * 18 });
-                }
-                this.spT = 400; break;
-            case 'Megumi': this.inShadow = !this.inShadow; this.spT = 300; break;
-            case 'Choso': this.proj = { active: true, x: this.x, y: this.y, vx: this.dir * 30, type: 'BLOOD' }; this.spT = 450; break;
             case 'Nobara': this.proj = { active: true, x: this.x, y: this.y, vx: this.dir * 24, type: 'NAIL' }; this.spT = 450; break;
-            case 'Gojo': this.proj = { active: true, x: this.x, y: this.y, vx: this.dir * 7, type: 'PURPLE' }; this.spT = 500; break;
+            case 'Hakari': if (Math.random() < 0.4) { this.jackpot = 600; this.spT = 225; } else { this.spT = 450; } break;
+            case 'Gojo': this.proj = { active: true, x: this.x, y: this.y, vx: this.dir * 7, type: 'PURPLE' }; this.spT = 450; break;
             case 'Sukuna': this.fx = 40; this.spT = 450; break;
+            case 'Itadori': this.vx = this.dir * 40; this.fx = 20; this.spT = 450; break;
             case 'Todo': let tx = this.x; this.x = opp.x; opp.x = tx; opp.stun = 30; this.spT = 250; break;
-            default: this.vx = this.dir * 45; this.fx = 25; this.spT = 450; break;
+            case 'Choso': this.proj = { active: true, x: this.x, y: this.y, vx: this.dir * 30, type: 'BLOOD' }; this.spT = 450; break;
+            case 'Nanami': this.vx = this.dir * 32; this.fx = 15; this.spT = 450; break;
+            case 'Megumi': this.inShadow = !this.inShadow; this.spT = 300; break; // Toggles shadow on skill
+            case 'Naoya': this.vx = this.dir * 55; this.fx = 35; this.spT = 450; break;
+            case 'Geto': this.proj = { active: true, x: this.x, y: this.y, vx: this.dir * 5, type: 'UZUMAKI' }; this.spT = 450; break;
+            case 'Ryu': case 'Yuta': this.fx = 130; this.spT = 450; break;
+            case 'Toji': case 'Maki': this.vx = this.dir * 48; this.fx = 25; this.spT = 450; break;
         }
     }
 
     update(opp) {
         if (!active || paused) return;
 
-        // Choso Poisoning (Opponent loses HP if this.poison > 0)
         if (this.poison > 0) {
             this.poison--;
             if (this.poison % 60 === 0) this.hp -= 2;
         }
 
-        // Geto Swarm Logic
-        this.swarm = this.swarm.filter(p => {
-            p.x += p.vx;
-            let dist = Math.sqrt((p.x - (opp.x+20))**2 + (p.y - (opp.y-40))**2);
-            if (dist < 40) {
-                opp.hp -= 15; opp.stun = 15; opp.vx = this.dir * 4;
-                return false;
-            }
-            return p.x > -100 && p.x < canvas.width + 100;
-        });
-
-        // Projection Logic (Single)
+        let isBeaming = (this.fx > 0 && (this.k === 'Ryu' || this.k === 'Yuta'));
+        if (this.fx > 0) {
+            this.fx--; let dist = Math.abs(this.x - opp.x);
+            if (this.k === 'Sukuna' && dist < 180) { opp.hp -= 2.5; opp.stun = 5; }
+            if (this.k === 'Itadori' && dist < 70) { opp.hp -= 60; opp.stun = 40; this.fx = 0; }
+            if (this.k === 'Naoya' && dist < 80) { opp.stun = 80; this.fx = 0; }
+            if (this.k === 'Nanami' && dist < 75) { opp.hp -= 50; opp.stun = 20; this.fx = 0; }
+            if ((this.k === 'Toji' || this.k === 'Maki') && dist < 85) { opp.hp -= 4; opp.stun = 10; }
+            let clashing = (p1.fx > 0 && p2.fx > 0 && (p1.k === 'Ryu' || p1.k === 'Yuta') && (p2.k === 'Ryu' || p2.k === 'Yuta'));
+            if (isBeaming && !clashing && dist < 2000 && Math.abs(this.y - opp.y) < 100) { opp.hp -= 2.2; opp.stun = 3; }
+        }
         if (this.proj.active) {
             this.proj.x += this.proj.vx;
             if (Math.abs(this.proj.x - (opp.x + 20)) < 60 && Math.abs(this.proj.y - 40 - (opp.y - 40)) < 90) {
-                if (this.proj.type === 'BLOOD') { opp.hp -= 30; opp.stun = 15; opp.poison = 180; } // 3 seconds
-                else if (this.proj.type === 'PURPLE') { opp.hp -= 85; opp.stun = 60; }
-                else if (this.proj.type === 'NAIL') { opp.hp -= 35; opp.stun = 25; }
+                if (this.proj.type === 'NAIL') { opp.hp -= 35; opp.stun = 25; }
+                else if (this.proj.type === 'PURPLE') { opp.hp -= 80; opp.stun = 60; }
+                else if (this.proj.type === 'BLOOD') { opp.hp -= 35; opp.stun = 15; opp.poison = 180; }
+                else if (this.proj.type === 'UZUMAKI') { opp.hp -= 90; opp.stun = 70; }
                 this.proj.active = false;
             }
             if (this.proj.x < -300 || this.proj.x > canvas.width + 300) this.proj.active = false;
         }
-
-        // Movement
-        if (this.stun <= 0) {
-            let speed = this.inShadow ? this.s.s * 1.65 : this.s.s;
+        if (isBeaming) { this.vx = 0; this.vy = 0; } 
+        else if (this.stun <= 0) {
+            let speed = this.inShadow ? this.s.s * 1.6 : this.s.s; 
             if (this.pNum === 1) { if (held.p1L) { this.vx = -speed; this.dir = -1; } if (held.p1R) { this.vx = speed; this.dir = 1; } }
             else if (!this.cpu) { if (held.p2L) { this.vx = -speed; this.dir = -1; } if (held.p2R) { this.vx = speed; this.dir = 1; } }
         }
-
         this.x += this.vx; this.y += this.vy; this.vx *= 0.82;
         let ground = canvas.height - 110;
-        if (this.y < ground) this.vy += 0.85; else { this.y = ground; this.vy = 0; }
-        
-        if (this.stun > 0) this.stun--; if (this.spT > 0) this.spT--; if (this.m1T > 0) this.m1T--;
+        if (!isBeaming) { if (this.y < ground) this.vy += 0.85; else { this.y = ground; this.vy = 0; } }
         if (this.jackpot > 0) { this.jackpot--; if (this.hp < 300) this.hp += 0.6; }
+        if (this.stun > 0) this.stun--; if (this.spT > 0) this.spT--; if (this.m1T > 0) this.m1T--;
         if (this.cpu) this.ai(opp);
     }
 
     atk(opp) {
-        if (this.stun > 0 || this.m1T > 0) return;
+        if (this.stun > 0 || this.m1T > 0 || (this.fx > 0 && (this.k === 'Ryu' || this.k === 'Yuta'))) return;
         this.m1T = 18; 
-        if (Math.abs(this.x - opp.x) < 95 && Math.abs(this.y - opp.y) < 100) {
+        
+        if (Math.abs(this.x - opp.x) < 90 && Math.abs(this.y - opp.y) < 100) {
             if (this.inShadow) {
-                opp.hp -= (this.s.d + 15); opp.stun = 70; // High stun, don't exit shadow
+                opp.hp -= (this.s.d + 15); // Shadow damage
+                opp.stun = 70; // Stays in shadow, but stuns them heavy
             } else {
-                opp.hp -= this.s.d; opp.stun = 12;
+                opp.hp -= this.s.d; 
+                opp.stun = 12; 
             }
-            opp.vx = this.dir * 7;
+            opp.vx = this.dir * 6;
         }
     }
 
     ai(opp) {
         let dist = Math.abs(this.x - opp.x);
-        if (dist > 150) this.vx = opp.x < this.x ? -this.s.s : this.s.s;
-        else if (Math.random() < 0.08) this.atk(opp);
-        if (Math.random() < 0.02) this.spec(opp);
+        if (dist > 160) this.vx = opp.x < this.x ? -this.s.s : this.s.s;
+        else if (Math.random() < 0.07) this.atk(opp);
+        if (Math.random() < 0.015) this.spec(opp);
     }
 }
-
-// ... initMode, startGame, loop, etc remain same as your provided code
+// ... Rest of the helper functions (initMode, startGame, loop, etc.) stay the same
